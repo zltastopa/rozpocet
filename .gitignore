@@ -1,0 +1,12 @@
+# Raw API responses: regenerable via scripts/fetch.py, not committed
+cache/
+
+# Python
+__pycache__/
+*.pyc
+
+# Build output assembled in CI
+_site/
+
+# OS
+.DS_Store

@@ -714,7 +714,8 @@ footer .parent-link { display:inline-block; margin-top:6px; font-weight:600; }
       head += `<div class="big">${approx}${eur(share(t.v, e))}</div><div class="meta">${esc(TILE[tileId].name)} · ${approx}${mil(t.v)}</div>`;
     }
     const rows = groupSums(e).map(({ g, v }) => `<div class="r"><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;background:${g.color}"></span>${esc(g.name)}</span><span>${eur(share(v, e))}</span></div>`).join("");
-    return head + `<div class="rows">${rows}</div>` + (D.events[y] ? `<div class="note">${esc(D.events[y])}</div>` : "");
+    return head + `<div class="rows">${rows}</div>` + (e.estimate ? `<div class="note">${esc(estText(y))}</div>` : "")
+      + (D.events[y] ? `<div class="note">${esc(D.events[y])}</div>` : "");
   }
   tc.addEventListener("pointermove", ev => {
     if (ev.pointerType !== "mouse") return;

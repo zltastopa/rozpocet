@@ -228,6 +228,98 @@ def ekv_leaves(payload: list[dict]) -> list[dict]:
     parents = {x["nadurovenKod"] for x in payload}
     return [x for x in payload if x["kod"] not in parents]
 
+def serialize_tiles(acc: dict, label: str, problems: list[str]) -> dict:
+    """{tile: {"v", "children", "kap"}} -> published form with sorted children and top 3 kapitoly."""
+    tiles = {}
+    for tid in TILE_IDS:
+        t = acc.get(tid)
+        if not t or abs(t["v"]) < 0.5:
+            continue
+        if t["v"] < 0 or any(v < -TOLERANCE_EUR for v in t["children"].values()):
+            # the treemap cannot draw negative areas; never publish them silently
+            problems.append(f"{label} {tid}: negative tile or child value")
+        children = sorted(((n, round(v)) for n, v in t["children"].items() if abs(v) >= 0.5), key=lambda c: -c[1])
+        kap = sorted(((n, round(v)) for n, v in t["kap"].items() if abs(v) >= 0.5), key=lambda c: -c[1])[:3]
+        tiles[tid] = {"v": round(t["v"]), "c": children, "k": kap}
+    return tiles
+
+
+def add_estimates(out_years: dict, problems: list[str]) -> list[int]:
+    """Add a program-based estimate (estimate.py) for every year that has a parsed bill
+    annex but no published COFOG data yet, with a backtest on the year before."""
+    from estimate import estimate  # local: estimate.py is only needed when an annex exists
+
+    def kap_names(year: int) -> dict[str, str]:
+        names = {}
+        for p in (CACHE / str(year)).glob("fnc-*.json"):
+            payload = load(p)["data"].get("payload") or []
+            if payload:
+                names[p.stem.removeprefix("fnc-")] = payload[0]["nazovOrganizacie"].strip()
+        return names
+
+    def run(year: int) -> tuple[dict, dict]:
+        names = kap_names(year - 1)
+
+        def classify(kap: str, fnc: str, eko: str) -> tuple[str, str]:
+            fnc = fnc[:4]   # row-level data uses 5-digit subclasses; published years use 4 digits
+            special = SPECIAL.get((kap, fnc))
+            hit = special and (special.get(eko) or special.get(None))
+            if hit:
+                tile, child = hit
+                return tile, child or EKV_NAMES.get(eko) or f"Ekonomická položka {eko}"
+            tile = rnd_or_prefix(fnc)
+            return tile, child_key(tile, fnc, names.get(kap, kap))
+
+        cells, report = estimate(year, classify, names)
+        acc: dict = defaultdict(lambda: {"v": 0.0, "children": defaultdict(float), "kap": defaultdict(float)})
+        for (tile, child, kap), v in cells.items():
+            acc[tile]["v"] += v
+            acc[tile]["children"][child] += v
+            acc[tile]["kap"][kap] += v
+        return serialize_tiles(acc, f"{year} odhad", problems), report
+
+    def shares(tiles: dict, total: float) -> dict:
+        return {tid: 100 * t["v"] / total for tid, t in tiles.items()}
+
+    done = []
+    for path in sorted(DATA.glob("navrh_*_programy.csv")):
+        year = int(path.stem.split("_")[1])
+        if str(year) in out_years:
+            continue  # published data exists: no estimate (older annexes only serve backtests)
+        with (DATA / f"navrh_{year}_suhrn.csv").open(encoding="utf-8") as f:
+            meta = next(csv.DictReader(f))
+        tiles, report = run(year)
+        total = sum(t["v"] for t in tiles.values())
+        if abs(total - int(meta["vydavky"])) > len(tiles):   # rounding of each tile to whole euros
+            problems.append(f"{year} odhad: tiles {total} != law total {meta['vydavky']}")
+        report.update({"zdroj_programy": meta["zdroj_programy"], "zdroj_bilancia": meta["zdroj_bilancia"]})
+
+        # backtest: estimate the previous year the same way and compare with its real split
+        prev = out_years.get(str(year - 1), {}).get("schvaleny")
+        if prev and (DATA / f"navrh_{year - 1}_programy.csv").exists():
+            bt_tiles, _ = run(year - 1)
+            bt_total = sum(t["v"] for t in bt_tiles.values())
+            est, real = shares(bt_tiles, bt_total), shares(prev["tiles"], prev["total"])
+            err = {tid: abs(est.get(tid, 0) - real.get(tid, 0)) for tid in set(est) | set(real)}
+            worst = max(err, key=err.get)
+            child_err = []
+            for tid, t in prev["tiles"].items():
+                rc = {n: 100 * v / prev["total"] for n, v in t["c"]}
+                ec = {n: 100 * v / bt_total for n, v in bt_tiles.get(tid, {"c": []})["c"]}
+                child_err += [abs(ec.get(n, 0) - rc.get(n, 0)) for n in set(rc) | set(ec)]
+            report["backtest"] = {
+                "rok": year - 1,
+                "max_chyba": round(max(err.values()), 2), "max_dlazdica": worst,
+                "priemerna_chyba": round(sum(err.values()) / len(err), 2),
+                "max_chyba_polozky": round(max(child_err), 2),
+                "priemerna_chyba_polozky": round(sum(child_err) / len(child_err), 2),
+            }
+        out_years[str(year)] = {"schvaleny": {"total": int(meta["vydavky"]), "revenue": int(meta["prijmy"]),
+                                              "tiles": tiles, "estimate": report}}
+        done.append(year)
+    return done
+
+
 
 def main() -> None:
     series = load(CACHE / "series.json")
@@ -346,25 +438,15 @@ def main() -> None:
             if abs(total - published) > TOLERANCE_EUR:
                 problems.append(f"{y} {m}: tiles {total:.2f} != published total {published:.2f}")
             rev = revenue_rec["SCHVALENY" if m == "schvaleny" else "SKUTOCNOST"]
-            tiles = {}
-            for tid in TILE_IDS:
-                t = acc[m].get(tid)
-                if not t or abs(t["v"]) < 0.5:
-                    continue
-                if t["v"] < 0 or any(v < -TOLERANCE_EUR for v in t["children"].values()):
-                    # the treemap cannot draw negative areas; never publish them silently
-                    problems.append(f"{y} {m} {tid}: negative tile or child value")
-                children = sorted(((n, round(v)) for n, v in t["children"].items() if abs(v) >= 0.5),
-                                  key=lambda c: -c[1])
-                kap = sorted(((n, round(v)) for n, v in t["kap"].items() if abs(v) >= 0.5),
-                             key=lambda c: -c[1])[:3]
-                tiles[tid] = {"v": round(t["v"]), "c": children, "k": kap}
+            tiles = serialize_tiles(acc[m], f"{y} {m}", problems)
             entry = {"total": round(total), "revenue": round(rev) if rev is not None else None, "tiles": tiles}
             if m == "skutocnost" and y > FINAL_ACCOUNT_THROUGH:
                 entry["provisional"] = True
             yd[m] = entry
         if yd:
             out_years[str(y)] = yd
+
+    estimates = add_estimates(out_years, problems)
 
     if problems:
         for p in problems:

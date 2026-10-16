@@ -38,8 +38,19 @@
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
   // ---- state + URL hash (#2025-skutocnost) ----
-  const state = { year: YEARS[YEARS.length - 1], measure: "schvaleny" };
+  // default: the latest year with published data (an estimate is one click away)
+  const isEst = (y, m = "schvaleny") => !!((D.years[y] || {})[m] || {}).estimate;
+  const state = { year: YEARS.filter(y => !isEst(y)).pop(), measure: "schvaleny" };
   function available(y, m) { return !!(D.years[y] && D.years[y][m]); }
+  const EST_LINE = "Celkové príjmy a výdavky sú zo schváleného rozpočtu; rozdelenie do oblastí je odhad.";
+  function estText(y) {
+    const x = D.years[y].schvaleny.estimate, bt = x.backtest;
+    return `Rozpočet na rok ${y}: celkové výdavky a príjmy sú zo zákona, ministerstvo však jeho rozdelenie podľa oblastí `
+      + `ešte nezverejnilo. Dlaždice sú preto odhad: sumu každého programu z prílohy zákona sme rozdelili tak, ako sa ten istý `
+      + `program delil v rozpočte na rok ${x.zaklad[0]} (prípadne ${x.zaklad[1]}).`
+      + (bt ? ` Keď sme rovnakým postupom odhadli rok ${bt.rok}, dlaždice sa od skutočnosti líšili v priemere o ${eur(bt.priemerna_chyba)} `
+        + `zo stovky, najviac o ${eur(bt.max_chyba)} pri dlaždici ${TILE[bt.max_dlazdica].short}. Je to chyba v minulosti, nie záruka presnosti odhadu.` : "");
+  }
   function readHash() {
     const m = location.hash.match(/^#(\d{4})(?:-(schvaleny|skutocnost))?$/);
     if (m && available(+m[1], m[2] || "schvaleny")) { state.year = +m[1]; state.measure = m[2] || "schvaleny"; }
@@ -165,15 +176,17 @@
       const pv = prev.tiles[id] ? share(prev.tiles[id].v, prev) : 0, d = share(t.v, e) - pv;
       yoy = Math.abs(d) < 0.005
         ? `<div class="yoy">Podiel oproti ${state.year - 1}: <b>bez zmeny</b> (vtedy ${eur(pv)})</div>`
-        : `<div class="yoy">Zmena podielu oproti ${state.year - 1}: <b>${d >= 0 ? "+" : "−"}${eur(Math.abs(d))}</b> zo stovky (vtedy ${eur(pv)})</div>`;
+        : `<div class="yoy">Zmena podielu oproti ${state.year - 1}: <b>${d >= 0 ? "+" : "−"}${eur(Math.abs(d))}</b> zo stovky (vtedy ${eur(pv)})${e.estimate ? ", podľa odhadu" : ""}</div>`;
     }
     const ev = D.events[state.year] ? `<div class="note">Rok ${state.year}: ${esc(D.events[state.year])}</div>` : "";
+    const est = !!e.estimate, approx = est ? "≈ " : "";
     return `<div class="tt">${esc(meta.name)}${FOOT[id] ? SUP[FOOT[id]] : ""}</div>`
-      + `<div class="big">${eur(share(t.v, e))} zo stovky</div>`
-      + `<div class="meta">${mil(t.v)} · ${pct(share(t.v, e))} výdavkov štátneho rozpočtu · ${esc(g.name)}</div>`
+      + `<div class="big">${approx}${eur(share(t.v, e))} zo stovky${est ? ' <span class="prov">odhad</span>' : ""}</div>`
+      + `<div class="meta">${approx}${mil(t.v)} · ${pct(share(t.v, e))} výdavkov štátneho rozpočtu · ${esc(g.name)}</div>`
       + (t.c.length > 1 || childIdx != null ? `<div class="rows">${rows}</div>` : "")
-      + (kap ? `<div class="h">Najväčšie rozpočtové kapitoly</div>${kap}` : "")
-      + both + yoy + (meta.note ? `<div class="note">${esc(meta.note)}</div>` : "") + ev;
+      + (kap ? `<div class="h">Najväčšie rozpočtové kapitoly${est ? " (odhad)" : ""}</div>${kap}` : "")
+      + both + yoy + (est ? `<div class="note">${EST_LINE}</div>` : "")
+      + (meta.note ? `<div class="note">${esc(meta.note)}</div>` : "") + ev;
   }
 
   // ---- treemap ----
@@ -215,7 +228,7 @@
       }
       const big = Math.min(26, Math.max(15, Math.sqrt(r.w * r.h) / 9));
       const name = TILE[id].short + (FOOT[id] ? SUP[FOOT[id]] : "");
-      const amt = eur(s);
+      const amt = (e.estimate ? "≈ " : "") + eur(s);
       const pad = 8, bw = labelBox.w - 2 * pad;
       if (labelBox.h >= big + 22 && bw >= textW(amt, big, 700)) {
         const maxLines = Math.max(1, Math.min(3, Math.floor((labelBox.h - pad - big - 4) / 15)));
@@ -316,12 +329,15 @@
   }
   function drawText() {
     const e = entry(), y = state.year, meas = MEASURE_LABEL[state.measure];
-    $("ctitle").textContent = `Kam ide stovka zo štátneho rozpočtu ${y}`;
+    $("ctitle").textContent = `Kam ide stovka zo štátneho rozpočtu ${y}${e.estimate ? " (odhad)" : ""}`;
     $("csub").innerHTML = `100 € = <b>${mil(e.total)}</b> výdavkov štátneho rozpočtu (${meas}) · plocha dlaždice = podiel zo stovky`
-      + (e.provisional ? `<span class="prov" title="Pred schválením záverečného účtu sa údaje ešte môžu spresniť.">predbežné</span>` : "");
+      + (e.provisional ? `<span class="prov" title="Pred schválením záverečného účtu sa údaje ešte môžu spresniť.">predbežné</span>` : "")
+      + (e.estimate ? `<span class="prov est">odhad rozdelenia</span><br><b>${EST_LINE}</b>` : "");
     const ev = $("event");
-    ev.hidden = !D.events[y];
-    ev.textContent = D.events[y] ? `Rok ${y}: ${D.events[y]}` : "";
+    const notes = [e.estimate ? estText(y) : null, D.events[y] ? `Rok ${y}: ${D.events[y]}` : null].filter(Boolean);
+    ev.hidden = !notes.length;
+    ev.classList.toggle("est", !!e.estimate);
+    ev.textContent = notes.join(" ");
     // KPIs
     const gap = e.revenue == null ? null : 100 * (e.total - e.revenue) / e.total;
     const top = Object.entries(e.tiles).sort((a, b) => b[1].v - a[1].v)[0];
@@ -354,7 +370,7 @@
 
   // ---- controls ----
   const yearsBox = $("years");
-  yearsBox.innerHTML = YEARS.map(y => `<button type="button" role="radio" data-year="${y}">${y}</button>`).join("");
+  yearsBox.innerHTML = YEARS.map(y => `<button type="button" role="radio" data-year="${y}"${isEst(y) ? ' class="est" title="Rozdelenie do oblastí je odhad"' : ""}>${y}${isEst(y) ? " odhad" : ""}</button>`).join("");
   function drawControls() {
     document.querySelectorAll(".seg button").forEach(b => {
       const on = b.dataset.measure === state.measure;
@@ -430,12 +446,23 @@
         return;
       }
       let acc = 0;
+      const est = !!e.estimate;
       for (const t of TILES) {
         const tv = (e.tiles[t.id] || {}).v || 0;
         if (tv <= 0) continue;
         const h = ph * tv / e.total, yy = mt + ph - ph * acc / e.total - h;
-        el("rect", { class: "band", "data-tile": t.id, x: x + gap / 2, y: yy, width: colW - gap, height: Math.max(0, h - .6), fill: COLOR[t.id] }, g);
+        el("rect", { class: "band", "data-tile": t.id, x: x + gap / 2, y: yy, width: colW - gap, height: Math.max(0, h - .6), fill: COLOR[t.id],
+          "fill-opacity": est ? .6 : 1 }, g);
         acc += tv;
+      }
+      if (est) {   // an estimated split is hatched and labelled, never shown like data
+        if (!svg.querySelector("#hatch")) {
+          const defs = el("defs", {}, svg);
+          const pat = el("pattern", { id: "hatch", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, defs);
+          el("line", { x1: 0, y1: 0, x2: 0, y2: 6, stroke: "#fff", "stroke-width": 2, "stroke-opacity": .7 }, pat);
+        }
+        el("rect", { x: x + gap / 2, y: mt, width: colW - gap, height: ph, fill: "url(#hatch)", "pointer-events": "none" }, g);
+        text(g, x + colW / 2, mt + ph + 42, "odhad", "ax", 9.5, "#8a5a00").setAttribute("text-anchor", "middle");
       }
       const prev = entry(y - 1, m);
       if (prev) {
@@ -455,10 +482,10 @@
   function colTip(y, tileId) {
     const e = entry(y, state.measure);
     if (!e) return `<div class="tt">${y}</div><div class="meta">Skutočnosť za tento rok zatiaľ nie je k dispozícii.</div>`;
-    let head = `<div class="tt">${y} · ${MEASURE_LABEL[state.measure]}${e.provisional ? " (predbežné)" : ""}</div><div class="meta">100 € = ${mil(e.total)}</div>`;
+    let head = `<div class="tt">${y} · ${MEASURE_LABEL[state.measure]}${e.provisional ? " (predbežné)" : ""}${e.estimate ? ' <span class="prov">odhad</span>' : ""}</div><div class="meta">100 € = ${mil(e.total)}${e.estimate ? ` · ${EST_LINE}` : ""}</div>`;
     if (tileId && e.tiles[tileId]) {
-      const t = e.tiles[tileId];
-      head += `<div class="big">${eur(share(t.v, e))}</div><div class="meta">${esc(TILE[tileId].name)} · ${mil(t.v)}</div>`;
+      const t = e.tiles[tileId], approx = e.estimate ? "≈ " : "";
+      head += `<div class="big">${approx}${eur(share(t.v, e))}</div><div class="meta">${esc(TILE[tileId].name)} · ${approx}${mil(t.v)}</div>`;
     }
     const rows = groupSums(e).map(({ g, v }) => `<div class="r"><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;background:${g.color}"></span>${esc(g.name)}</span><span>${eur(share(v, e))}</span></div>`).join("");
     return head + `<div class="rows">${rows}</div>` + (D.events[y] ? `<div class="note">${esc(D.events[y])}</div>` : "");
@@ -501,15 +528,16 @@
   function exportMeta(which) {
     const meas = MEASURE_LABEL[state.measure], e = entry();
     if (which === "tm") return {
-      title: `Kam ide stovka zo štátneho rozpočtu ${state.year}`,
-      sub: `100 € = ${mil(e.total)} výdavkov (${meas}${e.provisional ? ", predbežné údaje" : ""})`,
+      title: `Kam ide stovka zo štátneho rozpočtu ${state.year}${e.estimate ? " (odhad)" : ""}`,
+      sub: `100 € = ${mil(e.total)} výdavkov (${meas}${e.provisional ? ", predbežné údaje" : ""}${e.estimate ? "; rozdelenie do oblastí je odhad" : ""})`,
       legend: true,
-      extra: [$("small").textContent].concat(D.footnoted.filter(id => e.tiles[id])
+      extra: [e.estimate ? estText(state.year) : "", $("small").textContent].concat(D.footnoted.filter(id => e.tiles[id])
         .map(id => `${SUP[FOOT[id]]} ${TILE[id].name}: ${TILE[id].note}`)).filter(Boolean)
     };
     const prov = YEARS.some(y => (entry(y) || {}).provisional);
+    const estY = YEARS.filter(y => isEst(y, state.measure));
     return { title: `Stovka zo štátneho rozpočtu v čase, ${YEARS[0]} – ${YEARS[YEARS.length - 1]}`,
-      sub: `${meas}${prov ? " (posledný uzavretý rok predbežne)" : ""} · rovnaká výška stĺpcov = podiely, nie rast výdavkov`, legend: true };
+      sub: `${meas}${prov ? " (posledný uzavretý rok predbežne)" : ""}${estY.length ? ` · ${estY.join(", ")}: rozdelenie je odhad (šrafované)` : ""} · rovnaká výška stĺpcov = podiely, nie rast výdavkov`, legend: true };
   }
   function wrapLines(g, str, maxW) {
     const words = str.split(" "), lines = []; let cur = "";

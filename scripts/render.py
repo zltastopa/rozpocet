@@ -50,15 +50,36 @@ def main() -> None:
         f"{r['rozdiel_eur']:,.2f} €".replace(",", " ").replace(".", ",")
         for r in DATA["residuals"]) or "žiadne"
     src = DATA["source"]
-    # The next year's budget appears only once MF publishes its COFOG split; say so
-    # only while it is missing, so the note disappears by itself after a refresh.
-    next_year = int(last) + 1
-    next_year_note = "" if str(next_year) in DATA["years"] else (
-        f"<p><b>Rok {next_year}:</b> rozdelenie rozpočtu na rok {next_year} podľa funkčnej klasifikácie "
-        "ministerstvo na rozpocet.sk zatiaľ nezverejnilo"
-        + (" (parlament rozpočet schválil 14. 10. 2026, prílohy zákona však toto rozdelenie neobsahujú)"
-           if next_year == 2027 else "")
-        + ". Doplní sa automaticky pri najbližšej mesačnej obnove dát, keď bude k dispozícii.</p>")
+    est_years = [y for y in years if DATA["years"][y].get("schvaleny", {}).get("estimate")]
+    real_years = [y for y in years if y not in est_years]
+    last = real_years[-1] + (f" (a odhad {', '.join(est_years)})" if est_years else "")
+    sk_eur = lambda v: f"{v / 1e9:.2f}".replace(".", ",") + " mld. €"
+    sk_num = lambda v: f"{v:.2f}".replace(".", ",")
+    # An estimated year: what is exact, what is estimated, how, and how well it worked before.
+    next_year_note = ""
+    for y in est_years:
+        x = DATA["years"][y]["schvaleny"]["estimate"]
+        bt = x.get("backtest")
+        levels = "; ".join(f"{lv['popis']}: {sk_eur(lv['suma'])}" for lv in x["levels"] if lv["suma"])
+        next_year_note += (
+            f"<p><b>Rok {y} je odhad.</b> Celkové výdavky a príjmy sú zo zákona o štátnom rozpočte na rok {y} "
+            f"(<a href=\"{esc(x['zdroj_bilancia'])}\">bilancia</a>), rozdelenie podľa funkčnej klasifikácie však "
+            f"ministerstvo zatiaľ nezverejnilo. Sumy všetkých programov a vybraných podprogramov sú z prílohy č. 4 "
+            f"(<a href=\"{esc(x['zdroj_programy'])}\">výdavky na programy vlády</a>, vládny návrh, ktorý NR SR schválila "
+            f"s rovnakými celkovými výdavkami); každý program sme rozdelili do dlaždíc podľa toho, ako sa ten istý "
+            f"program delil v schválenom rozpočte na rok {x['zaklad'][0]} (údaje po riadkoch z rozpocet.sk). "
+            f"Program sa prevezme len vtedy, ak sa zhoduje aj jeho názov. Použité úrovne: {levels}; "
+            f"{sk_eur(x['bez_overenia_nazvu'])} patrí kódom, ktorých názov v zozname programov MF chýba, a nedal sa overiť. "
+            + (f"Spätný test: rovnakým postupom odhadnutý rok {bt['rok']} sa od skutočného rozdelenia líšil v priemere o "
+               f"{sk_num(bt['priemerna_chyba'])} € zo stovky na dlaždicu (najviac {sk_num(bt['max_chyba'])} €) a o "
+               f"{sk_num(bt['priemerna_chyba_polozky'])} € na položku (najviac {sk_num(bt['max_chyba_polozky'])} €). "
+               "Je to chyba v minulosti, nie záruka presnosti odhadu. " if bt else "")
+            + "Aj rozdelenie dlaždíc medzi kapitoly je odhadnuté. Keď ministerstvo zverejní skutočné rozdelenie, "
+            "odhad sa pri najbližšej mesačnej obnove dát automaticky nahradí.</p>")
+    next_year = int(years[-1]) + 1
+    if str(next_year) not in DATA["years"]:
+        next_year_note += (f"<p><b>Rok {next_year}:</b> rozpočet na rok {next_year} zatiaľ nie je k dispozícii. "
+                           "Doplní sa automaticky pri najbližšej mesačnej obnove dát.</p>")
     payload = json.dumps({**DATA, "footnoted": FOOTNOTED, "site": SITE}, ensure_ascii=False,
                          separators=(",", ":")).replace("</", "<\\/")
 

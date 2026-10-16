@@ -57,7 +57,7 @@ TILES = [
      "Štátny rozpočet do nej posiela najmä transfer z Všeobecnej pokladničnej správy "
      "(program „Transfer Sociálnej poisťovni“) a platí dávky v starobe cez jednotlivé ministerstvá."),
     ("davky", "soc", "Dávky a sociálna pomoc", "Dávky",
-     "Prídavky na deti, rodičovský príspevok, kompenzácie ťažkého zdravotného postihnutia, "
+     "Prídavky na deti, rodičovský príspevok, príspevky na kompenzáciu ťažkého zdravotného postihnutia, "
      "pomoc v hmotnej núdzi a ďalšie sociálne výdavky (COFOG 10 okrem staroby a pozostalých)."),
     ("trh", "soc", "Trh práce a zamestnanosť", "Trh práce",
      "Aktívne opatrenia na trhu práce a ďalšie výdavky všeobecnej pracovnej oblasti (COFOG 0412)."),
@@ -89,7 +89,7 @@ TILES = [
     ("vps", "stat", "Finančné a rozpočtové záležitosti VPS (vrátane rezerv)", "Financie VPS vrátane rezerv",
      "Finančné a rozpočtové záležitosti Všeobecnej pokladničnej správy. V schválenom rozpočte sú tu "
      "najmä rozpočtové rezervy a prostriedky, ktoré sa počas roka presúvajú na ministerstvá, preto je "
-     "v skutočnosti oveľa menšia."),
+     "táto dlaždica pri skutočnom čerpaní zvyčajne oveľa menšia."),
     ("sprava", "stat", "Všeobecné verejné služby", "Verejné služby",
      "Parlament, vláda, ministerstvá, zahraničné vzťahy, štatistika, finančná správa a ďalšie "
      "všeobecné služby (COFOG 01 bez dlhu, odvodu do EÚ, výskumu a financií VPS)."),
@@ -138,34 +138,59 @@ CHILD_NAMES = {
     "0451": "Cesty a diaľnice", "0452": "Vodná doprava", "0453": "Železnice",
     "0454": "Letecká doprava", "0455": "Potrubná a iná doprava",
     "051": "Odpady", "052": "Odpadové vody", "053": "Znečistenie ovzdušia a vody",
-    "054": "Ochrana prírody a krajiny", "056": "Ostatné životné prostredie",
+    "054": "Ochrana prírody a krajiny", "056": "Ostatné výdavky na životné prostredie",
     "061": "Rozvoj bývania", "062": "Rozvoj obcí", "063": "Zásobovanie vodou",
     "064": "Verejné osvetlenie", "066": "Ostatné bývanie a vybavenosť",
     "071": "Lieky a zdravotnícke pomôcky", "072": "Ambulantná starostlivosť",
-    "073": "Nemocnice", "074": "Verejné zdravie", "076": "Ostatné zdravotníctvo",
+    "073": "Nemocnice", "074": "Verejné zdravotníctvo", "076": "Ostatné zdravotníctvo",
     "081": "Šport a rekreácia", "082": "Kultúra", "083": "Vysielanie a vydavateľstvá",
     "084": "Cirkvi a náboženské spoločnosti", "086": "Ostatná kultúra a rekreácia",
-    "091": "Materské a základné školy", "092": "Stredné školy", "093": "Pomaturitné vzdelávanie",
-    "094": "Vysoké školy", "095": "Vzdelávanie bez určenia stupňa", "096": "Stravovanie a ubytovanie žiakov",
+    "091": "Predprimárne a primárne vzdelávanie (MŠ a 1. stupeň ZŠ)",
+    "092": "Sekundárne vzdelávanie (2. stupeň ZŠ a stredné školy)",
+    "093": "Pomaturitné neterciárne vzdelávanie", "094": "Terciárne vzdelávanie (vysoké školy)",
+    "095": "Vzdelávanie bez určenia stupňa", "096": "Stravovanie a ubytovanie žiakov a študentov",
     "098": "Ostatné vzdelávanie",
     "101": "Zdravotné postihnutie a choroba", "102": "Staroba", "103": "Pozostalí",
     "104": "Rodina a deti", "105": "Nezamestnanosť", "106": "Bývanie (sociálne)",
     "107": "Hmotná núdza", "109": "Ostatné sociálne zabezpečenie",
     "0411": "Podpora podnikania a obchodu", "0412": "Trh práce",
     "014": "Základný výskum", "017": "Obsluha štátneho dlhu",
+    "0180": "Transfery medzi úrovňami verejnej správy",
 }
 # tiles whose children are 4-digit codes rather than 3-digit groups
 CHILD_LEVEL4 = {"doprava", "podo", "trh", "sprava"}
 # tiles whose children are kapitoly (the money flows matter more than COFOG detail)
 CHILD_BY_KAPITOLA = {"dochodky", "veda"}
 
-# Documented events / classification notes shown as annotations (never suppress YoY).
+# Readable names for economic items (EKV) that appear as children of split cells.
+# The official item names are often grammatical fragments ("Štátnej rozpočtovej
+# organizácii"); unknown codes fall back to "<parent category>: <item>".
+EKV_NAMES = {
+    "637200": "Ostatné služby", "641006": "Transfery štátnym rozpočtovým organizáciám",
+    "719200": "Ostatné kapitálové výdavky", "642200": "Ostatné transfery jednotlivcom a neziskovým organizáciám",
+    "642016": "Transfery na dôchodkové dávky zo starobného poistenia",
+    "637038": "Nezrovnalosti a vratky prostriedkov EÚ", "637039": "Nezrovnalosti a vratky prostriedkov EÚ",
+    "637025": "Nezrovnalosti", "635009": "Údržba unikátneho softvéru",
+    "637024": "Vyrovnanie kurzových rozdielov", "637020": "Finančné zúčtovanie",
+    "644003": "Transfery fyzickým osobám – podnikateľom", "653001": "Manipulačné poplatky (úvery a pôžičky)",
+    "647001": "Úhrada majetkovej ujmy", "642031": "Platby za poistencov štátu",
+}
+
+# Execution (skutočnosť) is final once NR SR approves the štátny záverečný účet.
+# NR SR approved the one for 2025 on 6 Oct 2026 (61. schôdza), see
+# https://www.mfsr.sk/sk/financie/statne-vykaznictvo/klucove-dokumenty-uctovne-zavierky/statny-zaverecny-ucet-sr
+# Bump this when the next one is approved; later closed years are marked provisional.
+FINAL_ACCOUNT_THROUGH = 2025
+
+# Documented events / classification notes shown as annotations.
 EVENTS = {
     2009: "Slovensko prijalo euro. Sumy za roky 2005 až 2008 sú prepočítané konverzným kurzom 30,1260 Sk/€.",
     2013: "Platby za poistencov štátu sa od roku 2013 účtujú v sociálnom zabezpečení (predtým v "
           "zdravotníctve). Tu sú v oboch prípadoch v dlaždici Zdravotníctvo, takže porovnanie platí.",
-    2020: "Pandémia covid-19.",
+    2020: "Pandémia covid-19. Schválený rozpočet bol počas roka novelizovaný.",
 }
+# Years of the energy crisis: the note quotes the energy spending computed from the data.
+ENERGY_YEARS = (2023, 2024)
 
 
 # ---- helpers --------------------------------------------------------------
@@ -279,7 +304,11 @@ def main() -> None:
                     if hit is None:
                         continue
                     tile, child = hit
-                    child = child or f"{e['nazov'].strip()} (EKV {e['kod']})"
+                    if not child:
+                        parent = next((p["nazov"].strip() for p in erec["data"]["payload"]
+                                       if p["kod"] == e["nadurovenKod"]), "")
+                        name = e["nazov"].strip()
+                        child = EKV_NAMES.get(e["kod"]) or (f"{parent}: {name[0].lower()}{name[1:]}" if parent else name)
                     for m, v in ev.items():
                         if v:
                             add(m, tile, child, kap_name, v)
@@ -312,13 +341,16 @@ def main() -> None:
                 t = acc[m].get(tid)
                 if not t or abs(t["v"]) < 0.5:
                     continue
+                if t["v"] < 0 or any(v < -TOLERANCE_EUR for v in t["children"].values()):
+                    # the treemap cannot draw negative areas; never publish them silently
+                    problems.append(f"{y} {m} {tid}: negative tile or child value")
                 children = sorted(((n, round(v)) for n, v in t["children"].items() if abs(v) >= 0.5),
                                   key=lambda c: -c[1])
                 kap = sorted(((n, round(v)) for n, v in t["kap"].items() if abs(v) >= 0.5),
                              key=lambda c: -c[1])[:3]
                 tiles[tid] = {"v": round(t["v"]), "c": children, "k": kap}
             entry = {"total": round(total), "revenue": round(rev) if rev is not None else None, "tiles": tiles}
-            if m == "skutocnost" and y == this_year - 1:
+            if m == "skutocnost" and y > FINAL_ACCOUNT_THROUGH:
                 entry["provisional"] = True
             yd[m] = entry
         if yd:
@@ -336,6 +368,17 @@ def main() -> None:
         w.writeheader()
         w.writerows(rows)
 
+    events = {str(k): v for k, v in EVENTS.items()}
+    for y in ENERGY_YEARS:
+        yd = out_years.get(str(y), {})
+        m = "skutocnost" if "skutocnost" in yd else "schvaleny"
+        energy = sum(v for n, v in yd.get(m, {}).get("tiles", {}).get("priemysel", {}).get("c", []) if n == "Energetika")
+        if energy:
+            label = "skutočné čerpanie" if m == "skutocnost" else "schválený rozpočet"
+            amount = f"{energy / 1e9:.2f}".replace(".", ",")
+            events[str(y)] = (f"Energetická kríza: výdavky na energetiku (COFOG 043, v dlaždici Priemysel, "
+                              f"energetika a ostatné) dosiahli {amount} mld. € ({label}).")
+
     out = {
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "rules_version": RULES_VERSION,
@@ -350,7 +393,8 @@ def main() -> None:
         },
         "groups": GROUPS,
         "tiles": [{"id": t[0], "group": t[1], "name": t[2], "short": t[3] or t[2], "note": t[4]} for t in TILES],
-        "events": {str(k): v for k, v in EVENTS.items()},
+        "events": events,
+        "final_account_through": FINAL_ACCOUNT_THROUGH,
         "residuals": residuals,
         "years": out_years,
     }

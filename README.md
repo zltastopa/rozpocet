@@ -93,9 +93,11 @@ financií SR (licencia CC0):
   podprogramu z prílohy č. 4 (`data/navrh_2027_programy.csv`, súčty sedia na
   euro s každou kapitolou) rozdelí podľa toho, ako sa ten istý program delil v
   schválenom rozpočte na rok 2026 (údaje po riadkoch z `/api/vs/schvaleny`),
-  inak 2025, inak podľa celej kapitoly. Program sa prevezme len pri zhode názvu.
+  inak 2025, inak podľa celej kapitoly. Ak MF v zozname programov uvádza názov,
+  program sa prevezme len pri zhode názvu; pri 4,09 mld. € (programy, pri ktorých
+  zoznam uvádza len podprogramy, napr. 0D6, 0HF, 0H4) sa dá overiť len zhoda kódu.
   Spätný test na roku 2026 (rovnaká podrobnosť prílohy, základ 2025): chyba
-  dlaždice v priemere 0,45 € zo stovky, najviac 1,64 €. Je to chyba v minulosti,
+  dlaždice v priemere 0,44 € zo stovky, najviac 1,60 €. Je to chyba v minulosti,
   nie záruka pre rok 2027. Na stránke je odhad výrazne označený (šrafovanie,
   „≈“, „odhad“). Keď MF zverejní skutočné členenie, odhad sa automaticky nahradí.
 

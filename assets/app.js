@@ -185,7 +185,8 @@
       + `<div class="meta">${approx}${mil(t.v)} · ${pct(share(t.v, e))} výdavkov štátneho rozpočtu · ${esc(g.name)}</div>`
       + (t.c.length > 1 || childIdx != null ? `<div class="rows">${rows}</div>` : "")
       + (kap ? `<div class="h">Najväčšie rozpočtové kapitoly${est ? " (odhad)" : ""}</div>${kap}` : "")
-      + both + yoy + (est ? `<div class="note">${EST_LINE}</div>` : "")
+      + both + yoy + (est ? `<div class="note">${EST_LINE} Odhad podľa súm programov z prílohy zákona a ich rozdelenia v roku ${e.estimate.zaklad[0]}`
+        + (e.estimate.backtest ? `; v spätnom teste na roku ${e.estimate.backtest.rok} sa dlaždica mýlila priemerne o ${eur(e.estimate.backtest.priemerna_chyba)}.` : ".") + `</div>` : "")
       + (meta.note ? `<div class="note">${esc(meta.note)}</div>` : "") + ev;
   }
 
@@ -229,7 +230,10 @@
       const big = Math.min(26, Math.max(15, Math.sqrt(r.w * r.h) / 9));
       const name = TILE[id].short + (FOOT[id] ? SUP[FOOT[id]] : "");
       const amt = (e.estimate ? "≈ " : "") + eur(s);
-      const pad = 8, bw = labelBox.w - 2 * pad;
+      const pad = 8;
+      // prefer the largest child; if the amount does not fit there, use the whole tile
+      if (labelBox !== r && (labelBox.h < big + 22 || labelBox.w - 2 * pad < textW(amt, big, 700))) labelBox = r;
+      const bw = labelBox.w - 2 * pad;
       if (labelBox.h >= big + 22 && bw >= textW(amt, big, 700)) {
         const maxLines = Math.max(1, Math.min(3, Math.floor((labelBox.h - pad - big - 4) / 15)));
         const lines = wrapName(name, 13, bw, maxLines);
@@ -531,13 +535,14 @@
       title: `Kam ide stovka zo štátneho rozpočtu ${state.year}${e.estimate ? " (odhad)" : ""}`,
       sub: `100 € = ${mil(e.total)} výdavkov (${meas}${e.provisional ? ", predbežné údaje" : ""}${e.estimate ? "; rozdelenie do oblastí je odhad" : ""})`,
       legend: true,
-      extra: [e.estimate ? estText(state.year) : "", $("small").textContent].concat(D.footnoted.filter(id => e.tiles[id])
+      extra: [e.estimate ? EST_LINE + " " + estText(state.year) : "", $("small").textContent].concat(D.footnoted.filter(id => e.tiles[id])
         .map(id => `${SUP[FOOT[id]]} ${TILE[id].name}: ${TILE[id].note}`)).filter(Boolean)
     };
     const prov = YEARS.some(y => (entry(y) || {}).provisional);
     const estY = YEARS.filter(y => isEst(y, state.measure));
     return { title: `Stovka zo štátneho rozpočtu v čase, ${YEARS[0]} – ${YEARS[YEARS.length - 1]}`,
-      sub: `${meas}${prov ? " (posledný uzavretý rok predbežne)" : ""}${estY.length ? ` · ${estY.join(", ")}: rozdelenie je odhad (šrafované)` : ""} · rovnaká výška stĺpcov = podiely, nie rast výdavkov`, legend: true };
+      sub: `${meas}${prov ? " (posledný uzavretý rok predbežne)" : ""}${estY.length ? ` · ${estY.join(", ")}: rozdelenie je odhad (šrafované)` : ""} · rovnaká výška stĺpcov = podiely, nie rast výdavkov`, legend: true,
+      extra: estY.length ? [`${estY.join(", ")}: ${EST_LINE}`] : [] };
   }
   function wrapLines(g, str, maxW) {
     const words = str.split(" "), lines = []; let cur = "";

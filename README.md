@@ -86,9 +86,18 @@ financií SR (licencia CC0):
 - **Zoznam kapitol:** zoznam kapitol pre rok niekedy vynechá kapitolu s
   výdavkami (kapitola 55 v roku 2011, 469 897 €), preto sa každý rok pýtame na
   všetky kódy kapitol zo všetkých rokov.
-- **Rok 2027:** rozpočet schválila NR SR 14. 10. 2026, ale jeho rozdelenie podľa
-  funkčnej klasifikácie zatiaľ nie je zverejnené (prílohy zákona ani vládny
-  materiál ho neobsahujú). Mesačná obnova ho doplní, keď sa objaví na rozpocet.sk.
+- **Rok 2027 je odhad.** NR SR schválila rozpočet 14. 10. 2026, ale jeho
+  rozdelenie podľa funkčnej klasifikácie ministerstvo zatiaľ nezverejnilo.
+  Celkové výdavky (35 665 744 906 €) a príjmy sú presné, z prílohy č. 1. Rozdelenie
+  do dlaždíc odhaduje `scripts/estimate.py`: sumu každého programu a vybraného
+  podprogramu z prílohy č. 4 (`data/navrh_2027_programy.csv`, súčty sedia na
+  euro s každou kapitolou) rozdelí podľa toho, ako sa ten istý program delil v
+  schválenom rozpočte na rok 2026 (údaje po riadkoch z `/api/vs/schvaleny`),
+  inak 2025, inak podľa celej kapitoly. Program sa prevezme len pri zhode názvu.
+  Spätný test na roku 2026 (rovnaká podrobnosť prílohy, základ 2025): chyba
+  dlaždice v priemere 0,45 € zo stovky, najviac 1,64 €. Je to chyba v minulosti,
+  nie záruka pre rok 2027. Na stránke je odhad výrazne označený (šrafovanie,
+  „≈“, „odhad“). Keď MF zverejní skutočné členenie, odhad sa automaticky nahradí.
 
 Rozhodnutia o hraniciach, kategóriách a zobrazení boli prediskutované a
 odsúhlasené v nezávislej revízii (Codex).
@@ -99,6 +108,8 @@ odsúhlasené v nezávislej revízii (Codex).
 scripts/fetch.py    # stiahne odpovede API do cache/ (s URL a časom stiahnutia)
 scripts/build.py    # -> data/stovka.json + data/kapitola_fnc.csv (s kontrolami)
 scripts/render.py   # -> index.html (vloží assets/style.css, assets/app.js a dáta)
+scripts/parse_navrh.py 2027  # príloha č. 4 návrhu zákona -> data/navrh_2027_*.csv (treba pdftotext)
+scripts/estimate.py # odhad rozdelenia roka bez zverejnených údajov (volá ho build.py)
 ```
 
 Iba štandardná knižnica Pythonu 3.12, bez závislostí; na stránke vanilla JS

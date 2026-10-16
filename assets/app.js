@@ -31,7 +31,7 @@
   const nf2 = new Intl.NumberFormat("sk-SK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const nf1 = new Intl.NumberFormat("sk-SK", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const nf0 = new Intl.NumberFormat("sk-SK", { maximumFractionDigits: 0 });
-  const eur = x => (x > 0 && x < 0.005) ? "< 0,01 €" : nf2.format(x) + " €";
+  const eur = x => (x > 0 && x < 0.01) ? "< 1 cent" : nf2.format(x) + " €";
   const mil = x => nf1.format(x / 1e6) + " mil. €";
   const mld = x => nf2.format(x / 1e9) + " mld. €";
   const pct = x => nf1.format(x) + " %";
@@ -126,37 +126,52 @@
   // ---- tooltip ----
   const tip = $("tip");
   let tipFor = null;
-  function showTip(html, x, y) {
+  // pinned = opened by a tap/keyboard: the tooltip accepts scrolling and stays put
+  function showTip(html, x, y, pinned) {
     tip.innerHTML = html; tip.hidden = false;
+    tip.classList.toggle("pinned", !!pinned);
     const r = tip.getBoundingClientRect();
     let left = x + 16, top = y + 16;
     if (left + r.width > innerWidth - 8) left = Math.max(8, x - r.width - 16);
     if (top + r.height > innerHeight - 8) top = Math.max(8, innerHeight - r.height - 8);
     tip.style.left = left + "px"; tip.style.top = top + "px";
   }
-  function hideTip() { tip.hidden = true; tipFor = null; document.querySelectorAll(".tile.hl").forEach(t => t.classList.remove("hl")); }
+  function hideTip() {
+    tip.hidden = true; tipFor = null; tip.classList.remove("pinned");
+    document.querySelectorAll(".tile.hl").forEach(t => t.classList.remove("hl"));
+    document.querySelectorAll(".sub.on").forEach(s => s.classList.remove("on"));
+  }
   document.addEventListener("keydown", e => { if (e.key === "Escape") hideTip(); });
 
   function share(v, e) { return 100 * v / e.total; }
   function tileTip(id, childIdx) {
     const e = entry(), t = e.tiles[id], meta = TILE[id], g = GROUP[meta.group];
-    const rows = t.c.slice(0, 6).map((c, i) => `<div class="r${i === childIdx ? " on" : ""}"><span>${esc(c[0])}</span><span>${eur(share(c[1], e))}</span></div>`).join("");
-    const more = t.c.length > 6 ? `<div class="r"><span>ďalšie (${t.c.length - 6})</span><span>${eur(share(t.c.slice(6).reduce((s, c) => s + c[1], 0), e))}</span></div>` : "";
+    const row = (c, i) => `<div class="r${i === childIdx ? " on" : ""}"><span>${esc(c[0])}</span><span>${eur(share(c[1], e))}</span></div>`;
+    let rows = t.c.slice(0, 6).map(row).join("");
+    if (t.c.length > 6) {
+      if (childIdx != null && childIdx >= 6) rows += row(t.c[childIdx], childIdx);   // hovered item outside the top 6
+      const rest = t.c.filter((c, i) => i >= 6 && i !== childIdx);
+      if (rest.length) rows += `<div class="r"><span>ďalšie položky (${rest.length})</span><span>${eur(share(rest.reduce((s, c) => s + c[1], 0), e))}</span></div>`;
+    }
     const kap = t.k.map(k => `<div class="r"><span>${esc(k[0])}</span><span>${mil(k[1])}</span></div>`).join("");
+    // the same tile in the other measure of the same year (e.g. reserves: approved vs spent)
+    const other = state.measure === "schvaleny" ? "skutocnost" : "schvaleny", oe = entry(state.year, other);
+    const both = oe ? `<div class="yoy">${state.measure === "schvaleny" ? "Skutočne minuté" : "Schválený rozpočet"} ${state.year}: <b>${eur(oe.tiles[id] ? share(oe.tiles[id].v, oe) : 0)}</b> zo stovky (${mil(oe.tiles[id] ? oe.tiles[id].v : 0)})${oe.provisional ? ", predbežne" : ""}</div>` : "";
     let yoy = "";
     const prev = entry(state.year - 1);
     if (prev) {
       const pv = prev.tiles[id] ? share(prev.tiles[id].v, prev) : 0, d = share(t.v, e) - pv;
-      const cls = d > 0.005 ? "up" : d < -0.005 ? "down" : "";
-      yoy = `<div class="yoy">Zmena podielu oproti ${state.year - 1}: <b class="${cls}">${d >= 0 ? "+" : "−"}${eur(Math.abs(d))}</b> zo stovky (vtedy ${eur(pv)})</div>`;
+      yoy = Math.abs(d) < 0.005
+        ? `<div class="yoy">Podiel oproti ${state.year - 1}: <b>bez zmeny</b> (vtedy ${eur(pv)})</div>`
+        : `<div class="yoy">Zmena podielu oproti ${state.year - 1}: <b>${d >= 0 ? "+" : "−"}${eur(Math.abs(d))}</b> zo stovky (vtedy ${eur(pv)})</div>`;
     }
     const ev = D.events[state.year] ? `<div class="note">Rok ${state.year}: ${esc(D.events[state.year])}</div>` : "";
     return `<div class="tt">${esc(meta.name)}${FOOT[id] ? SUP[FOOT[id]] : ""}</div>`
       + `<div class="big">${eur(share(t.v, e))} zo stovky</div>`
       + `<div class="meta">${mil(t.v)} · ${pct(share(t.v, e))} výdavkov štátneho rozpočtu · ${esc(g.name)}</div>`
-      + (t.c.length > 1 || childIdx != null ? `<div class="rows">${rows}${more}</div>` : "")
+      + (t.c.length > 1 || childIdx != null ? `<div class="rows">${rows}</div>` : "")
       + (kap ? `<div class="h">Najväčšie rozpočtové kapitoly</div>${kap}` : "")
-      + yoy + (meta.note ? `<div class="note">${esc(meta.note)}</div>` : "") + ev;
+      + both + yoy + (meta.note ? `<div class="note">${esc(meta.note)}</div>` : "") + ev;
   }
 
   // ---- treemap ----
@@ -238,28 +253,36 @@
     g.classList.add("hl");
     g.querySelectorAll(".sub").forEach(s => s.classList.toggle("on", child != null && +s.dataset.child === child));
   }
-  tm.addEventListener("mousemove", ev => {
+  // Input model: mouse hover shows a following tooltip; a tap (touch/pen) toggles a
+  // pinned, scrollable tooltip; keyboard focus shows a pinned tooltip. Focus that is
+  // a side effect of a pointer press is ignored so it cannot fight the tap toggle.
+  let lastPointer = { type: "mouse", t: 0 }, openedBy = null;
+  document.addEventListener("pointerdown", ev => { lastPointer = { type: ev.pointerType, t: Date.now() }; }, true);
+  const fromPointer = () => Date.now() - lastPointer.t < 600;
+  tm.addEventListener("pointermove", ev => {
+    if (ev.pointerType !== "mouse") return;
     const h = tileEvent(ev);
     if (!h) return hideTip();
     highlight(h.g, h.child);
-    tipFor = h.id;
+    tipFor = h.id; openedBy = "mouse";
     showTip(tileTip(h.id, h.child), ev.clientX, ev.clientY);
   });
-  tm.addEventListener("mouseleave", () => { hideTip(); document.querySelectorAll(".sub.on").forEach(s => s.classList.remove("on")); });
-  tm.addEventListener("click", ev => {   // touch: tap toggles the tooltip
+  tm.addEventListener("pointerleave", ev => { if (ev.pointerType === "mouse") hideTip(); });
+  tm.addEventListener("click", ev => {
+    if (lastPointer.type === "mouse" && fromPointer()) return;   // hover already shows it
     const h = tileEvent(ev);
     if (!h) return;
-    if (tipFor === h.id && ev.pointerType !== "mouse") return hideTip();
-    highlight(h.g, h.child); tipFor = h.id;
-    showTip(tileTip(h.id, h.child), ev.clientX, ev.clientY);
+    if (tipFor === h.id && openedBy === "tap") return hideTip();
+    highlight(h.g, h.child); tipFor = h.id; openedBy = "tap";
+    showTip(tileTip(h.id, h.child), ev.clientX, ev.clientY, true);
   });
   tm.addEventListener("focusin", ev => {
-    const g = ev.target.closest(".tile"); if (!g) return;
+    const g = ev.target.closest(".tile"); if (!g || fromPointer()) return;
     const b = g.getBoundingClientRect();
-    highlight(g, null); tipFor = g.dataset.id;
-    showTip(tileTip(g.dataset.id, null), b.left + Math.min(b.width, 120) - 16, b.top + 10);
+    highlight(g, null); tipFor = g.dataset.id; openedBy = "key";
+    showTip(tileTip(g.dataset.id, null), b.left + Math.min(b.width, 120) - 16, b.top + 10, true);
   });
-  tm.addEventListener("focusout", hideTip);
+  tm.addEventListener("focusout", () => { if (openedBy === "key") hideTip(); });
   tm.addEventListener("keydown", ev => {
     if (ev.key !== "ArrowRight" && ev.key !== "ArrowLeft") return;
     const all = [...tm.querySelectorAll(".tile")], i = all.indexOf(document.activeElement);
@@ -270,11 +293,11 @@
   $("small").addEventListener("click", ev => {
     const b = ev.target.closest("button[data-id]"); if (!b) return;
     const r = b.getBoundingClientRect();
-    tipFor = b.dataset.id;
-    showTip(tileTip(b.dataset.id, null), r.left, r.bottom - 8);
+    tipFor = b.dataset.id; openedBy = "tap";
+    showTip(tileTip(b.dataset.id, null), r.left, r.bottom - 8, true);
     ev.stopPropagation();
   });
-  document.addEventListener("click", ev => { if (!ev.target.closest(".tile, #small button, .col")) hideTip(); });
+  document.addEventListener("click", ev => { if (!ev.target.closest(".tile, #small button, .col, #tip")) hideTip(); });
 
   // ---- header, KPIs, legend, table ----
   function groupSums(e) {
@@ -297,8 +320,8 @@
       `<div class="kpi"><div class="n">${mld(e.total)}</div><div class="l">výdavky štátneho rozpočtu ${y} (${meas})${growth == null ? "" : `, ${growth >= 0 ? "+" : "−"}${pct(Math.abs(growth))} oproti ${y - 1}`}</div></div>`
       + `<div class="kpi"><div class="n">${e.revenue == null ? "–" : mld(e.revenue)}</div><div class="l">príjmy štátneho rozpočtu ${y}</div></div>`
       + (gap == null ? `<div class="kpi"><div class="n">–</div><div class="l">bilancia nie je k dispozícii</div></div>`
-        : gap >= 0 ? `<div class="kpi"><div class="n">${eur(gap)}</div><div class="l">z každých 100 € výdavkov chýba v príjmoch (hotovostný schodok štátneho rozpočtu ${mld(e.total - e.revenue)})</div></div>`
-          : `<div class="kpi"><div class="n">${eur(-gap)}</div><div class="l">na každých 100 € výdavkov zostáva v príjmoch navyše (prebytok)</div></div>`)
+        : gap >= 0 ? `<div class="kpi"><div class="n">${eur(gap)}</div><div class="l">toľko príjmov chýba na každých 100 € výdavkov (hotovostný schodok štátneho rozpočtu ${mld(e.total - e.revenue)})</div></div>`
+          : `<div class="kpi"><div class="n">${eur(-gap)}</div><div class="l">toľko príjmov zostáva navyše na každých 100 € výdavkov (prebytok štátneho rozpočtu)</div></div>`)
       + `<div class="kpi"><div class="n">${eur(share(top[1].v, e))}</div><div class="l">najväčšia dlaždica: ${esc(TILE[top[0]].name)}</div></div>`;
     // legend
     $("legend").innerHTML = groupSums(e).map(({ g, v }) => `<span><span class="sw" style="background:${g.color}"></span>${esc(g.name)}<b>${eur(share(v, e))}</b></span>`).join("");
@@ -314,7 +337,7 @@
         rows += `<tr><td>${esc(t.name)}</td><td>${esc(g.name)}</td><td>${eur(share(tv, e))}</td><td>${mil(tv)}</td><td>${d}</td></tr>`;
       }
     }
-    $("table").innerHTML = `<table><caption class="sr">${esc($("ctitle").textContent)}, ${meas}</caption><thead><tr><th>Dlaždica</th><th>Skupina</th><th>€ zo stovky</th><th>Suma</th><th>Zmena oproti ${y - 1}</th></tr></thead><tbody>${rows}</tbody></table>`;
+    $("table").innerHTML = `<table><caption class="sr">${esc($("ctitle").textContent)}, ${meas}</caption><thead><tr><th>Dlaždica</th><th>Skupina</th><th>€ zo stovky</th><th>Suma</th><th>Zmena v € zo stovky oproti ${y - 1}</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
   // ---- controls ----
@@ -343,8 +366,15 @@
     if (year && available(year, state.measure)) state.year = year;
     hideTip(); writeHash(); render();
   }
-  document.querySelector(".seg").addEventListener("click", ev => {
+  const seg = document.querySelector(".seg");
+  seg.addEventListener("click", ev => {
     const b = ev.target.closest("button"); if (b) setState(null, b.dataset.measure);
+  });
+  seg.addEventListener("keydown", ev => {   // radio group: arrows move the selection
+    if (!["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown"].includes(ev.key)) return;
+    ev.preventDefault();
+    setState(null, state.measure === "schvaleny" ? "skutocnost" : "schvaleny");
+    seg.querySelector(`[data-measure="${state.measure}"]`).focus();
   });
   yearsBox.addEventListener("click", ev => {
     const b = ev.target.closest("button"); if (b && !b.disabled) setState(+b.dataset.year);
@@ -421,24 +451,27 @@
     const rows = groupSums(e).map(({ g, v }) => `<div class="r"><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;background:${g.color}"></span>${esc(g.name)}</span><span>${eur(share(v, e))}</span></div>`).join("");
     return head + `<div class="rows">${rows}</div>` + (D.events[y] ? `<div class="note">${esc(D.events[y])}</div>` : "");
   }
-  tc.addEventListener("mousemove", ev => {
+  tc.addEventListener("pointermove", ev => {
+    if (ev.pointerType !== "mouse") return;
     const c = ev.target.closest(".col"); if (!c) return hideTip();
     const s = ev.target.closest(".band");
+    openedBy = "mouse";
     showTip(colTip(+c.dataset.year, s && s.dataset.tile), ev.clientX, ev.clientY);
   });
-  tc.addEventListener("mouseleave", hideTip);
+  tc.addEventListener("pointerleave", ev => { if (ev.pointerType === "mouse") hideTip(); });
   tc.addEventListener("click", ev => {
     const c = ev.target.closest(".col"); if (!c) return;
     const y = +c.dataset.year, s = ev.target.closest(".band");
-    if (available(y, state.measure)) setState(y);
-    if (ev.pointerType !== "mouse") showTip(colTip(y, s && s.dataset.tile), ev.clientX, ev.clientY);
+    if (available(y, state.measure)) setState(y);   // redraws the chart
+    if (lastPointer.type !== "mouse") { openedBy = "tap"; showTip(colTip(y, s && s.dataset.tile), ev.clientX, ev.clientY, true); }
   });
   tc.addEventListener("focusin", ev => {
-    const c = ev.target.closest(".col"); if (!c) return;
+    const c = ev.target.closest(".col"); if (!c || fromPointer()) return;
     const b = c.getBoundingClientRect();
-    showTip(colTip(+c.dataset.year, null), b.right, b.top + 40);
+    openedBy = "key";
+    showTip(colTip(+c.dataset.year, null), b.right, b.top + 40, true);
   });
-  tc.addEventListener("focusout", hideTip);
+  tc.addEventListener("focusout", () => { if (openedBy === "key") hideTip(); });
   tc.addEventListener("keydown", ev => {
     const c = ev.target.closest(".col"); if (!c) return;
     if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); setState(+c.dataset.year); tc.querySelector(`.col[data-year="${c.dataset.year}"]`).focus(); }
@@ -458,7 +491,9 @@
     if (which === "tm") return {
       title: `Kam ide stovka zo štátneho rozpočtu ${state.year}`,
       sub: `100 € = ${mil(e.total)} výdavkov (${meas}${e.provisional ? ", predbežné údaje" : ""})`,
-      legend: true, extra: $("small").textContent
+      legend: true,
+      extra: [$("small").textContent].concat(D.footnoted.filter(id => e.tiles[id])
+        .map(id => `${SUP[FOOT[id]]} ${TILE[id].name}: ${TILE[id].note}`)).filter(Boolean)
     };
     const prov = YEARS.some(y => (entry(y) || {}).provisional);
     return { title: `Stovka zo štátneho rozpočtu v čase, ${YEARS[0]} – ${YEARS[YEARS.length - 1]}`,
@@ -481,7 +516,7 @@
       const CW = Math.max(W + 2 * pad, 640);
       const probe = document.createElement("canvas").getContext("2d");
       probe.font = `12px ${FONT}`;
-      const scope = (meta.extra ? wrapLines(probe, meta.extra, CW - 2 * pad) : []).concat(wrapLines(probe, SCOPE, CW - 2 * pad));
+      const scope = (meta.extra || []).flatMap(x => wrapLines(probe, x, CW - 2 * pad)).concat(wrapLines(probe, SCOPE, CW - 2 * pad));
       const legendItems = meta.legend ? groupSums(entry()).map(s => s.g) : [];
       const head = 58, legendH = legendItems.length ? 26 : 0, foot = 26 + scope.length * 16;
       const c = document.createElement("canvas");

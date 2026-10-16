@@ -1,0 +1,216 @@
+kapitola,nazov_kapitoly,program,nazov,podprogram,suma
+01,Kancelária Národnej rady SR,06M,Zákonodarná a kontrolná činnosť parlamentu,0,45042959
+01,Kancelária Národnej rady SR,0EK01,Informačné technológie financované zo štátneho rozpočtu – Kancelária Národnej rady SR,0,2404155
+02,Kancelária prezidenta SR,06N,Reprezentácia štátu a obyvateľov SR,0,9979743
+02,Kancelária prezidenta SR,0EK02,Informačné technológie financované zo štátneho rozpočtu – Kancelária prezidenta SR,0,356000
+03,Úrad vlády SR,06P,Tvorba a implementácia politík,0,54157607
+03,Úrad vlády SR,0EK03,Informačné technológie financované zo štátneho rozpočtu – Úrad vlády SR,0,1118378
+04,"Ministerstvo investícií, regionálneho rozvoja a informatizácie SR",0DV,Fondy EÚ - MIRRI,0,1069934063
+04,"Ministerstvo investícií, regionálneho rozvoja a informatizácie SR",0EC,Programy nadnárodnej a medziregionálnej spolupráce,0,1156379
+04,"Ministerstvo investícií, regionálneho rozvoja a informatizácie SR",0ET,"Výkon funkcie ministra investícií, regionálneho rozvoja a informatizácie SR",0,184489012
+04,"Ministerstvo investícií, regionálneho rozvoja a informatizácie SR",0ET05,Regionálny rozvoj,1,1110178
+04,"Ministerstvo investícií, regionálneho rozvoja a informatizácie SR",0ET06,Regionálny príspevok pre najmenej rozvinuté okresy,1,11566591
+04,"Ministerstvo investícií, regionálneho rozvoja a informatizácie SR",0EK13,"Informačné technológie financované zo štátneho rozpočtu – Ministerstvo investícií, regionálneho rozvoja a informatizácie",0,43419304
+05,Kancelária Ústavného súdu SR,00A,Ochrana ústavnosti,0,8487335
+05,Kancelária Ústavného súdu SR,0EK04,Informačné technológie financované zo štátneho rozpočtu – Kancelária Ústavného súdu SR,0,923732
+06,Kancelária Najvyššieho súdu SR,01W,Jednotný výklad / aplikácia zákona - program NS SR,0,19631741
+06,Kancelária Najvyššieho súdu SR,0EK05,Informačné technológie financované zo štátneho rozpočtu – Najvyšší súd SR,0,227500
+07,Generálna prokuratúra SR,06R,Presadzovanie zákonnosti - program GP SR,0,152130166
+07,Generálna prokuratúra SR,0AU04,Civilný krízový manažment v oblasti prokuratúry - GP SR,0,20000
+07,Generálna prokuratúra SR,0EK06,Informačné technológie financované zo štátneho rozpočtu – Generálna prokuratúra SR,0,5738300
+08,Najvyšší kontrolný úrad SR,06S,Nezávislá kontrolná činnosť,0,14422255
+08,Najvyšší kontrolný úrad SR,0EK07,Informačné technológie financované zo štátneho rozpočtu – Najvyšší kontrolný úrad SR,0,921604
+09,Slovenská informačná služba,06T,Informačná činnosť,0,101581844
+10,Ministerstvo zahraničných vecí a európskych záležitostí SR,06U,Rozvoj zahraničných vzťahov,0,151423959
+10,Ministerstvo zahraničných vecí a európskych záležitostí SR,0D3,Štátna politika k Slovákom žijúcim v zahraničí,0,3602076
+10,Ministerstvo zahraničných vecí a európskych záležitostí SR,05T0A,Rozvojová spolupráca MZVEZ SR,0,6409780
+10,Ministerstvo zahraničných vecí a európskych záležitostí SR,05T0A02,Rozvojová spolupráca MZVaEZ SR,1,6409780
+10,Ministerstvo zahraničných vecí a európskych záležitostí SR,09701,Príspevky SR do MO - MZVaEZ SR,0,17007432
+10,Ministerstvo zahraničných vecí a európskych záležitostí SR,0EK09,Informačné technológie financované zo štátneho rozpočtu – Ministerstvo zahraničných vecí a európskych záležitostí SR,0,6400900
+11,Ministerstvo obrany SR,095,Rozvoj obrany,0,756989035
+11,Ministerstvo obrany SR,096,Obrana,0,2102757637
+11,Ministerstvo obrany SR,06E0I,MO SR - Výskum a vývoj na podporu obrany štátu,0,5000000
+11,Ministerstvo obrany SR,05T0B,Oficiálna rozvojová pomoc - MO SR,0,190000
+11,Ministerstvo obrany SR,06H02,Hospodárska mobilizácia MO SR,0,1000000
+11,Ministerstvo obrany SR,0AU06,Účasť civilných expertov na aktivitách kríz. manažmentu mimo územia SR - MO SR,0,150000
+12,Ministerstvo vnútra SR,0D6,Efektívna a spoľahlivá štátna správa,0,1865119386
+12,Ministerstvo vnútra SR,0D60702,Starostlivosť o ľudské zdroje,1,109323500
+12,Ministerstvo vnútra SR,0D609,Voľby,1,22014296
+12,Ministerstvo vnútra SR,00201,MV SR - Civilné núdzové plánovanie v SR,0,2500
+12,Ministerstvo vnútra SR,0AS01,MV SR - Ochrana kritickej infraštruktúry v Slovenskej republike,0,2500
+12,Ministerstvo vnútra SR,05T03,Oficiálna humanitárna pomoc Slovenskej republiky do zahraničia,0,100000
+12,Ministerstvo vnútra SR,06E0J,MV SR - Miesta riadenia pre obranu štátu,0,4217748
+12,Ministerstvo vnútra SR,06H03,Hospodárska mobilizácia MV SR,0,38265
+12,Ministerstvo vnútra SR,09702,MV SR - Príspevky SR do medzinárodných organizácií,0,380860
+12,Ministerstvo vnútra SR,0EK0B,Informačné technológie financované zo štátneho rozpočtu – Ministerstvo vnútra SR,0,137236499
+12,Ministerstvo vnútra SR,0HU0I,"Výskum, vývoj a inovácie - MV",0,995250
+13,Ministerstvo spravodlivosti SR,070,Väzenstvo,0,324702972
+13,Ministerstvo spravodlivosti SR,08P,Financovanie systému súdnictva,0,381472733
+13,Ministerstvo spravodlivosti SR,08R,Tvorba a implementácia politík,0,32008413
+13,Ministerstvo spravodlivosti SR,06H04,Hospodárska mobilizácia MS SR,0,14500
+13,Ministerstvo spravodlivosti SR,0AR08,Ministerstvo spravodlivosti SR - Protidrogová politika,0,13800
+13,Ministerstvo spravodlivosti SR,0EK0C,Informačné technológie financované zo štátneho rozpočtu – Ministerstvo spravodlivosti SR,0,25772274
+15,Ministerstvo financií SR,072,"Výber daní, cla, odvodov a príspevkov",0,404448834
+15,Ministerstvo financií SR,074,"Tvorba metodiky, riadenie, kontrola, vládny audit a vnútorný audit verejných financií",0,85517442
+15,Ministerstvo financií SR,074040W,Transfery ostatným subjektom verejnej správy - Úrad pre dohľad nad výkonom auditu,1,268000
+15,Ministerstvo financií SR,05T09,Rozvojová spolupráca – MF SR,0,8729899
+15,Ministerstvo financií SR,06H05,Hospodárska mobilizácia MF SR,0,6100
+15,Ministerstvo financií SR,09703,Príspevky SR do MO – MF SR,0,51000
+15,Ministerstvo financií SR,0AU05,Vysielanie civilných expertov do aktivít kríz. manažmentu mimo územia SR – MF SR,0,64699
+15,Ministerstvo financií SR,0EK0D,Informačné technológie financované zo štátneho rozpočtu – Ministerstvo financií SR,0,141289795
+15,Ministerstvo financií SR,0EK0D05,Rozpočtový informačný systém,1,7557884
+15,Ministerstvo financií SR,0EK0D0U,Deklaračný systém,1,4375256
+15,Ministerstvo financií SR,0EK0D1Q,Vybudovanie nosnej infraštruktúry,1,2522873
+18,Ministerstvo životného prostredia SR,075,Starostlivosť o životné prostredie,0,424286127
+18,Ministerstvo životného prostredia SR,076,Tvorba a implementácia politík,0,86975260
+18,Ministerstvo životného prostredia SR,06H06,Hospodárska mobilizácia MŽP SR,0,185000
+18,Ministerstvo životného prostredia SR,0EK0E,Informačné technológie financované zo štátneho rozpočtu – Ministerstvo životného prostredia SR,0,3223972
+18,Ministerstvo životného prostredia SR,0HU0A,"Výskum, vývoj a inovácie - MŽP",0,2661978
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",021,Tvorba a implementácia politík,0,37963649
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",077,"Vysokoškolské vzdelávanie a veda, sociálna podpora študentov vysokých škôl",0,955057637
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",078,"Národný program výchovy, vzdelávania a mládeže",0,4267637108
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",0H6,Program Slovensko 2021 - 2027 - MŠVVaM SR,0,121838837
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",0HV,Plán obnovy a odolnosti MŠVVaM SR,0,73481171
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",06K11,Úlohy výskumu a vývoja podporované Agentúrou na podporu výskumu a vývoja,0,41565853
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",06K12,Koordinácia prierezových aktivít štátnej vednej a technickej politiky,0,11337053
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",06K18,"Kapitálové výdavky pre oblasť vedy, výskumu a vývoja",0,190000
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",06K19,NSVVI,0,787421
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",05T08,Oficiálna rozvojová pomoc - MŠVVaM SR (ODA),0,3033000
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",06H07,Hospodárska mobilizácia MŠVVaM SR,0,5297
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",0970A,Príspevky SR do MO - MŠVVaM SR,0,15213434
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",0AR02,MŠVVaM SR - Protidrogová politika,0,30000
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",0EK0F,"Informačné technológie financované zo štátneho rozpočtu – Ministerstvo školstva, výskumu, vývoja a mládeže SR",0,26173575
+20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",0HU02,"Výskum, vývoj a inovácie - MŠVVaM SR",0,22379821
+21,Ministerstvo zdravotníctva SR,079,Prevencia a ochrana zdravia,0,71496471
+21,Ministerstvo zdravotníctva SR,07A,Zdravotná starostlivosť,0,2569217958
+21,Ministerstvo zdravotníctva SR,07A01,Poistné za poistencov štátu,1,2100813944
+21,Ministerstvo zdravotníctva SR,07A0403,Dobudovanie a inovácia záchrannej zdravotnej služby v SR,1,30773241
+21,Ministerstvo zdravotníctva SR,07B,Tvorba a implementácia politík,0,79195004
+21,Ministerstvo zdravotníctva SR,07B0204,"Zber, spracovanie a analýza údajov",1,16357606
+21,Ministerstvo zdravotníctva SR,0AR04,Ministerstvo zdravotníctva SR - Protidrogová politika,0,122764
+21,Ministerstvo zdravotníctva SR,06E03,MZ SR - Zdravotnícka podpora,0,267204
+21,Ministerstvo zdravotníctva SR,06H08,Hospodárska mobilizácia MZ SR,0,1504000
+21,Ministerstvo zdravotníctva SR,09705,Príspevky SR do MO - MZ SR,0,1000667
+21,Ministerstvo zdravotníctva SR,0EK0G,Informačné technológie financované zo štátneho rozpočtu – Ministerstvo zdravotníctva SR,0,25031497
+22,"Ministerstvo práce, sociálnych vecí a rodiny SR",07C,Sociálna inklúzia,0,3705913734
+22,"Ministerstvo práce, sociálnych vecí a rodiny SR",07C020A,Štátom platené poistné,1,4607748
+22,"Ministerstvo práce, sociálnych vecí a rodiny SR",07C06,Nesystémové dávky sociálneho poistenia,1,213663265
+22,"Ministerstvo práce, sociálnych vecí a rodiny SR",07C0A,Podpora sociálnych služieb,1,299166711
+22,"Ministerstvo práce, sociálnych vecí a rodiny SR",07E,Tvorba a implementácia politík,0,273033946
+22,"Ministerstvo práce, sociálnych vecí a rodiny SR",06G04,Aktívna politika trhu práce a zvýšenie zamestnateľnosti - MPSVR SR,0,60206010
+22,"Ministerstvo práce, sociálnych vecí a rodiny SR",06G0404,Národné programy na rozvoj aktívnej politiky trhu práce a zvýšenie zamestnateľnosti,1,56779600
+22,"Ministerstvo práce, sociálnych vecí a rodiny SR",06G040J,Individuálna štátna pomoc,1,3426410
+22,"Ministerstvo práce, sociálnych vecí a rodiny SR",06G21,"Inovatívny, prístupný a rozvíjajúci sa trh práce (OP SK)",0,399062897
+22,"Ministerstvo práce, sociálnych vecí a rodiny SR",06H09,Hospodárska mobilizácia MPSVR SR,0,45189
+22,"Ministerstvo práce, sociálnych vecí a rodiny SR",09706,Príspevky SR do MO - MPSVR SR,0,660000
+22,"Ministerstvo práce, sociálnych vecí a rodiny SR",0AR05,"Ministerstvo práce, sociálnych vecí a rodiny SR - Protidrogová politika",0,50000
+22,"Ministerstvo práce, sociálnych vecí a rodiny SR",0EK0H,"Informačné technológie financované zo štátneho rozpočtu – Ministerstvo práce, sociálnych vecí a rodiny SR",0,22419891
+24,Ministerstvo kultúry SR,08S,"Tvorba, šírenie, ochrana a prezentácia kultúrnych hodnôt",0,357278211
+24,Ministerstvo kultúry SR,08S02,Dotačný systém MK SR,1,10890000
+24,Ministerstvo kultúry SR,08S0303,Slovenská televízia a rozhlas,1,157182142
+24,Ministerstvo kultúry SR,08S0304,Tlačová agentúra Slovenskej republiky,1,3798568
+24,Ministerstvo kultúry SR,08S0401,Príspevok Audiovizuálnemu fondu,1,12800000
+24,Ministerstvo kultúry SR,08S0601,Príspevok Fondu na podporu umenia,1,30200000
+24,Ministerstvo kultúry SR,08S07,Fond na podporu kultúry národnostných menšín,1,8800000
+24,Ministerstvo kultúry SR,08T,Tvorba a implementácia politík,0,115818679
+24,Ministerstvo kultúry SR,06H0A,Hospodárska mobilizácia MK SR,0,2656
+24,Ministerstvo kultúry SR,0EK0I,Informačné technológie financované zo štátneho rozpočtu – Ministerstvo kultúry SR,0,8579775
+24,Ministerstvo kultúry SR,0HU08,"Výskum, vývoj a inovácie - MK",0,485470
+26,Ministerstvo hospodárstva SR,07K,Rozvoj priemyslu a podpora podnikania,0,411107320
+26,Ministerstvo hospodárstva SR,07K0106,Podpora útlmu a likvidácie následkov ťažby v uhoľnom baníctve,1,13085559
+26,Ministerstvo hospodárstva SR,07K010F,Podpora útlmu rudného baníctva,1,1900000
+26,Ministerstvo hospodárstva SR,07K0115,Národný jadrový fond,1,1052130
+26,Ministerstvo hospodárstva SR,07K0119,Národný jadrový fond - odvody od prenosovej sústavy a distribučných sústav,1,68500000
+26,Ministerstvo hospodárstva SR,07K021M,Podpora podnikateľov - dotácia na kompenzáciu zvýšených nákladov na energie,1,109729383
+26,Ministerstvo hospodárstva SR,07K0403,Podpora rozvoja strategických investícií - Investičné stimuly,1,6269859
+26,Ministerstvo hospodárstva SR,07K0L,Podpora strategickej investície Volvo Car Slovakia,1,122088695
+26,Ministerstvo hospodárstva SR,07K0P,Podpora strategickej investície GIB EnergyX Slovakia,1,68524524
+26,Ministerstvo hospodárstva SR,07L,Tvorba a implementácia politík,0,34302983
+26,Ministerstvo hospodárstva SR,0HD,OP Slovensko časť MH SR,0,18055951
+26,Ministerstvo hospodárstva SR,06H01,Hospodárska mobilizácia MH SR,0,1936935
+26,Ministerstvo hospodárstva SR,09704,Príspevky Slovenskej republiky do medzinárodných organizácií - MH SR,0,1030800
+26,Ministerstvo hospodárstva SR,0AS03,MH SR - Ochrana kritickej infraštruktúry v Slovenskej republike,0,4300
+26,Ministerstvo hospodárstva SR,0EK0J,Informačné technológie financované zo štátneho rozpočtu – Ministerstvo hospodárstva SR,0,2259012
+26,Ministerstvo hospodárstva SR,0HU03,"Výskum, vývoj a inovácie - MH",0,1934818
+27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,090,"TVORBA, REGULÁCIA A IMPLEMENTÁCIA POLITÍK",0,212143489
+27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,09006,POZEMKOVÉ ÚPRAVY,1,20822538
+27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,0CC,STABILIZÁCIA POĽNOHOSPODÁRSTVA A TRHOV S POĽNOHOSPODÁRSKYMI KOMODITAMI,0,161709
+27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,0H4,STRATEGICKÝ PLÁN SPP 2023 - 2027,0,482209632
+27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,0H5,TRHOVO ORIENTOVANÉ VÝDAVKY MIMO SP SPP,0,29935341
+27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,05T04,Oficiálna rozvojová pomoc - MPRV SR,0,32967
+27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,06H0B,Hospodárska mobilizácia MPRV SR,0,85340
+27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,0EK0K,Informačné technológie financované zo štátneho rozpočtu – Ministerstvo pôdohospodárstva a rozvoja vidieka SR,0,14432782
+29,Ministerstvo dopravy SR,017,Podpora rozvoja bývania,0,31262578
+29,Ministerstvo dopravy SR,01706,Štátna prémia k stavebnému sporeniu,1,9000000
+29,Ministerstvo dopravy SR,01707,Štátny príspevok k hypotekárnym úverom,1,421000
+29,Ministerstvo dopravy SR,053,Cestná infraštruktúra,0,289121492
+29,Ministerstvo dopravy SR,0530505,Platba za dostupnosť pre 2. balík PPP,1,135748563
+29,Ministerstvo dopravy SR,0530507,Platba za dostupnosť D4/R7,1,61544480
+29,Ministerstvo dopravy SR,055,Letecká doprava a infraštruktúra,0,6000000
+29,Ministerstvo dopravy SR,07S,Železničná doprava,0,925523510
+29,Ministerstvo dopravy SR,07S03,Podpora verejných služieb - prevádzkovanie dopravy na dráhach,1,448990687
+29,Ministerstvo dopravy SR,07S05,Podpora verejných služieb - prevádzkovanie dráh - ŽSR,1,476532823
+29,Ministerstvo dopravy SR,07T,Tvorba a implementácia politík,0,525448308
+29,Ministerstvo dopravy SR,0HF,Program Slovensko 2021-2027,0,330164063
+29,Ministerstvo dopravy SR,06H0D,Hospodárska mobilizácia MD SR,0,1686482
+29,Ministerstvo dopravy SR,09707,Príspevky SR do MO - MD SR,0,805609
+29,Ministerstvo dopravy SR,0EK0L,Informačné technológie financované zo štátneho rozpočtu – Ministerstvo dopravy SR,0,12228686
+31,"Úrad geodézie, kartografie a katastra SR",07U,"Geodézia, kartografia a kataster",0,12556600
+31,"Úrad geodézie, kartografie a katastra SR",06H0E,Hospodárska mobilizácia ÚGKaK SR,0,1700
+31,"Úrad geodézie, kartografie a katastra SR",0EK0M,"Informačné technológie financované zo štátneho rozpočtu – Úrad geodézie, kartografie a katastra SR",0,7100226
+32,Štatistický úrad SR,07V,Štatistické zisťovania,0,28674155
+32,Štatistický úrad SR,07V010A,SODB,1,367766
+32,Štatistický úrad SR,0EK0N,Informačné technológie financované zo štátneho rozpočtu – Štatistický úrad SR,0,9164721
+32,Štatistický úrad SR,0EK0N06,SODB - IT,1,920000
+32,Štatistický úrad SR,0EK0N07,Voľby - IT,1,1182000
+33,Úrad pre verejné obstarávanie,07W,Verejné obstarávanie,0,13967744
+33,Úrad pre verejné obstarávanie,0EK0O,Informačné technológie financované zo štátneho rozpočtu – Úrad pre verejné obstarávanie,0,2236524
+34,Úrad pre reguláciu sieťových odvetví,0CB,Úrad pre reguláciu sieťových odvetví,0,6050640
+34,Úrad pre reguláciu sieťových odvetví,0EK0P,Informačné technológie financované zo štátneho rozpočtu – Úrad pre reguláciu sieťových odvetví,0,269042
+36,Úrad jadrového dozoru SR,080,Výkon štátneho dozoru nad jadrovou bezpečnosťou,0,8849491
+36,Úrad jadrového dozoru SR,06H0F,Hospodárska mobilizácia ÚJD SR,0,500
+36,Úrad jadrového dozoru SR,0970D,Príspevky SR do MO - ÚJD SR,0,700000
+36,Úrad jadrového dozoru SR,0EK0Q,Informačné technológie financované zo štátneho rozpočtu – Úrad jadrového dozoru SR,0,798346
+37,Úrad priemyselného vlastníctva SR,081,Podpora priemyselného vlastníctva,0,5239033
+37,Úrad priemyselného vlastníctva SR,0970B,Príspevky SR do MO - ÚPV SR,0,150000
+37,Úrad priemyselného vlastníctva SR,0EK0R,Informačné technológie financované zo štátneho rozpočtu – Úrad priemyselného vlastníctva SR,0,324055
+38,"Úrad pre normalizáciu, metrológiu a skúšobníctvo SR",082,"Štátna politika v oblasti technickej normalizácie, metrológie, kvality, posudzovania zhody a akreditácie",0,8555851
+38,"Úrad pre normalizáciu, metrológiu a skúšobníctvo SR",0970C,Príspevky SR do MO - ÚNMS SR,0,84600
+38,"Úrad pre normalizáciu, metrológiu a skúšobníctvo SR",0EK0S,"Informačné technológie financované zo štátneho rozpočtu – Úrad pre normalizáciu, metrológiu a skúšobníctvo SR",0,242088
+40,Protimonopolný úrad SR,084,Hospodárska súťaž,0,4290159
+40,Protimonopolný úrad SR,0EK0T,Informačné technológie financované zo štátneho rozpočtu – Protimonopolný úrad SR,0,102749
+41,Národný bezpečnostný úrad,0D9,Bezpečnosť informácií,0,17958680
+41,Národný bezpečnostný úrad,0EK0U,Informačné technológie financované zo štátneho rozpočtu – Národný bezpečnostný úrad,0,65446
+42,Správa štátnych hmotných rezerv SR,086,Štátne hmotné rezervy,0,6343253
+42,Správa štátnych hmotných rezerv SR,06E06,SŠHR SR - Štátne hmotné rezervy pre obranu,0,4042551
+42,Správa štátnych hmotných rezerv SR,06H0H,Hospodárska mobilizácia SŠHR SR,0,620000
+42,Správa štátnych hmotných rezerv SR,0EK0V,Informačné technológie financované zo štátneho rozpočtu – Správa štátnych hmotných rezerv SR,0,248400
+48,Všeobecná pokladničná správa,06Q,Ochrana základných práv a slobôd,0,2273602
+48,Všeobecná pokladničná správa,08H,Dlhová služba,0,2039299630
+48,Všeobecná pokladničná správa,0A0,Ochrana osobných údajov - Úrad na ochranu osobných údajov Slovenskej republiky,0,3550220
+48,Všeobecná pokladničná správa,0GH,Ochrana oznamovateľov protispoločenskej činnosti,0,1252834
+48,Všeobecná pokladničná správa,0HW,Organizácia Všeobecná pokladničná správa,0,4698571108
+48,Všeobecná pokladničná správa,0HW01,Rozpočtové rezervy,1,21000000
+48,Všeobecná pokladničná správa,0HW0101,Rezerva vlády,1,0
+48,Všeobecná pokladničná správa,0HW0104,Rezerva na riešenie krízových situácií mimo času vojny a vojnového stavu a vykonávanie povodňových prác,1,21000000
+48,Všeobecná pokladničná správa,0HW0108,Rezerva na riešenie negatívnych vplyvov vývoja rozpočtového hospodárenia,1,0
+48,Všeobecná pokladničná správa,0I1,Mediálna agenda,0,4733039
+48,Všeobecná pokladničná správa,0EK0W,,0,681817
+51,Slovenská akadémia vied,087,"Výskum a vývoj v prírodných, technických, lekárskych a spoločenských vedách a ich zabezpečenie",0,132731970
+51,Slovenská akadémia vied,0EK11,Informačné technológie financované zo štátneho rozpočtu – Slovenská akadémia vied,0,698265
+51,Slovenská akadémia vied,0HU0E,"Výskum, vývoj a inovácie - SAV",0,20839340
+55,Kancelária Súdnej rady SR,08L,Organizácia súdnictva a postavenie sudcov.,0,3177415
+55,Kancelária Súdnej rady SR,0EK12,Informačné technológie financované zo štátneho rozpočtu – Kancelária Súdnej rady SR,0,71200
+56,Kancelária Najvyššieho správneho súdu SR,0GQ,Jednotný výklad a aplikácia zákonov vo veciach správneho súdnictva,0,8198713
+56,Kancelária Najvyššieho správneho súdu SR,0EK14,Informačné technológie financované zo štátneho rozpočtu – Kancelária Najvyššieho správneho súdu SR,0,465000
+57,Úrad pre územné plánovanie a výstavbu SR,0HG,Tvorba a implementácia politík,0,54416853
+57,Úrad pre územné plánovanie a výstavbu SR,0EK15,Informačné technológie financované zo štátneho rozpočtu - Úrad pre územné plánovanie a výstavbu SR,0,7361578
+58,Ministerstvo cestovného ruchu a športu SR,026,Rozvoj a podpora športu,0,155921832
+58,Ministerstvo cestovného ruchu a športu SR,0I2,Tvorba a implementácia politík,0,11528270
+58,Ministerstvo cestovného ruchu a športu SR,0I3,Rozvoj a podpora cestovného ruchu,0,58932395
+58,Ministerstvo cestovného ruchu a športu SR,0I302,Dotácie organizáciám cestovného ruchu,1,11684586
+58,Ministerstvo cestovného ruchu a športu SR,0970E,Príspevky SR do MO - MCRaŠ SR,0,160167
+58,Ministerstvo cestovného ruchu a športu SR,0EK16,Informačné technológie financované zo štátneho rozpočtu – Ministerstvo cestovného ruchu a športu SR,0,1183800
+59,Úrad podpredsedu vlády SR pre Plán obnovy a znalostnú ekonomiku,0IJ,Tvorba a implementácia politík,0,15371745
+59,Úrad podpredsedu vlády SR pre Plán obnovy a znalostnú ekonomiku,0HU01,"Výskum, vývoj a inovácie - ÚV SR",0,242252421
+59,Úrad podpredsedu vlády SR pre Plán obnovy a znalostnú ekonomiku,0EK17,Informačné technológie zo štátneho rozpočtu - Úrad podpredsedu vlády pre Plán obnovy a znalostnú ekonomiku,0,807227

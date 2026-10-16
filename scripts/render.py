@@ -79,8 +79,10 @@ def main() -> None:
             "odhad sa pri najbližšej mesačnej obnove dát automaticky nahradí.</p>")
     next_year = int(years[-1]) + 1
     if str(next_year) not in DATA["years"]:
-        next_year_note += (f"<p><b>Rok {next_year}:</b> rozpočet na rok {next_year} zatiaľ nie je k dispozícii. "
-                           "Doplní sa automaticky pri najbližšej mesačnej obnove dát.</p>")
+        next_year_note += (f"<p><b>Rok {next_year}:</b> zatiaľ chýba. Štátny rozpočet na rok {next_year} je schválený, "
+                           f"ale rozpočet Sociálnej poisťovne na rok {next_year} a rozdelenie výdavkov štátu podľa oblastí "
+                           "ešte nie sú na rozpocet.sk. Bez nich by stovka nebola celá, preto rok doplníme, až keď budú "
+                           "k dispozícii (pri mesačnej obnove dát).</p>")
     payload = json.dumps({**DATA, "footnoted": FOOTNOTED, "site": SITE}, ensure_ascii=False,
                          separators=(",", ":")).replace("</", "<\\/")
 
@@ -108,15 +110,15 @@ def main() -> None:
       <img src="{BADGE}" alt="Projekt Žltá Stopa" width="118" height="38">
     </a>
   </div>
-  <p class="tagline">Štátny rozpočet Slovenska zmenšený na 100&nbsp;€</p>
-  <p class="sub">Keby štát z rozpočtu minul namiesto miliárd len jednu stovku, koľko by išlo na školy,
-    dávky, dôchodky, armádu či úroky z dlhu? Každá dlaždica predstavuje podiel na výdavkoch štátneho
-    rozpočtu, za roky {first} až {last}. Keď na dlaždicu prejdeš kurzorom alebo na ňu ťukneš, uvidíš,
-    z čoho sa skladá a z ktorých rozpočtových kapitol sa financuje.</p>
-  <p class="scope"><b>Čo sa počíta:</b> štátny rozpočet, teda súčet kapitol zo zákona o štátnom rozpočte,
-    vrátane transferov, ktoré štát posiela Sociálnej poisťovni a zdravotným poisťovniam. Nepočítajú sa
-    dôchodky a zdravotná starostlivosť, ktoré tieto inštitúcie platia z odvodov, ani rozpočty obcí a krajov.
-    Je to rozdelenie výdavkov štátu, nie toho, kam idú dane jedného človeka.</p>
+  <p class="tagline">Štátny rozpočet a Sociálna poisťovňa zmenšené na 100&nbsp;€</p>
+  <p class="sub">Keby štát minul namiesto miliárd len jednu stovku, koľko by išlo na dôchodky, školy,
+    dávky, armádu či úroky z dlhu? Každá dlaždica predstavuje podiel na výdavkoch, za roky {first} až {last}.
+    Keď na dlaždicu prejdeš kurzorom alebo na ňu ťukneš, uvidíš, z čoho sa skladá a kto ju platí.</p>
+  <p class="scope"><b>Čo je v stovke:</b> štátny rozpočet (súčet kapitol zo zákona o štátnom rozpočte) a
+    Sociálna poisťovňa, ktorá na Slovensku vypláca dôchodky a ďalšie dávky z odvodov. V Česku sú dôchodky
+    priamo v štátnom rozpočte, u nás ich bez Sociálnej poisťovne nevidno. Peniaze, ktoré štát Sociálnej
+    poisťovni posiela, počítame len raz, tam, kde ich vyplatí. <b>Mimo stovky</b> sú zdravotné poisťovne
+    (ako v Česku), obce a kraje. Je to rozdelenie výdavkov, nie toho, kam idú dane jedného človeka.</p>
 </header>
 
 <div class="kpis" id="kpis" aria-live="polite"></div>
@@ -153,13 +155,23 @@ def main() -> None:
 <footer>
   <h2>Metodika a zdroje</h2>
   <p><b>Zdroj:</b> {esc(src['name'])}. Výdavky každej kapitoly štátneho rozpočtu podľa funkčnej
-    klasifikácie (COFOG) z verejného Open Data API (<code>{esc(src['fnc'])}</code>) a pre vybrané
-    položky aj prienik s ekonomickou klasifikáciou (<code>…/polozkyRozpocetuVSOrg/…</code>), ktorý
-    používa samotný portál rozpocet.sk. Stiahnuté {sk_date(src['retrieved_from'])} až {sk_date(src['retrieved_to'])}.</p>
-  <p><b>Hranica:</b> štátny rozpočet = súčet kapitol (pre rok 2026 presne 32&nbsp;899&nbsp;667&nbsp;683&nbsp;€
-    ako v zákone č.&nbsp;303/2025 Z.&nbsp;z.). Nepoužívame súhrn „Štátny rozpočet“ z API, ktorý
-    pridáva aj účty ako Štátny dlh a tým niektoré peniaze počíta dvakrát (raz ako transfer z kapitoly,
-    raz ako výdavok príjemcu). <b>Schválený rozpočet</b> je rozpočet podľa zákona o štátnom rozpočte
+    klasifikácie (COFOG) z verejného Open Data API (<code>{esc(src['fnc'])}</code>); výdavky Sociálnej
+    poisťovne podľa ekonomickej klasifikácie a pre vybrané položky štátu aj prienik s ekonomickou
+    klasifikáciou (<code>…/polozkyRozpocetuVSOrg/…</code>), ktorý používa samotný portál rozpocet.sk.
+    Stiahnuté {sk_date(src['retrieved_from'])} až {sk_date(src['retrieved_to'])}.</p>
+  <p><b>Hranica:</b> stovka = výdavky štátneho rozpočtu (súčet kapitol, pre rok 2026 presne
+    32&nbsp;899&nbsp;667&nbsp;683&nbsp;€ ako v zákone č.&nbsp;303/2025 Z.&nbsp;z.) + výdavky Sociálnej poisťovne
+    − transfer zo štátneho rozpočtu do Sociálnej poisťovne (Všeobecná pokladničná správa, položka 641003;
+    v roku 2026 2,34 mld.&nbsp;€, rovnako ako príjem Sociálnej poisťovne „transfer zo ŠR“) − presuny medzi
+    vlastnými fondmi Sociálnej poisťovne (jej položka 641003, v schválených rozpočtoch vždy nula).
+    Pri roku 2023 sa výdavky Sociálnej poisťovne po tomto odpočte (11,92 mld.&nbsp;€) líšia od jej vlastnej
+    Správy o hospodárení (11,95 mld.&nbsp;€) o 34 mil.&nbsp;€, ktoré nevieme vysvetliť; je to približná kontrola,
+    nie úplné zosúladenie. Odvody, ktoré štát platí ako zamestnávateľ, sa neodpočítavajú (podobne ako v
+    európskej metodike, kde nejde o transfer). Všetky kapitoly a roky sú skontrolované, či neposielajú do
+    Sociálnej poisťovne ďalšie transfery; päť drobných jednorazových prípadov (spolu menej ako 0,3 mil.&nbsp;€)
+    nemá v dátach uvedeného príjemcu a ponechávame ich ako výdavok štátu. Súhrn „Štátny rozpočet“ z API
+    nepoužívame, lebo pridáva aj účty ako Štátny dlh a niektoré peniaze počíta dvakrát (raz ako transfer z
+    kapitoly, raz ako výdavok príjemcu). <b>Schválený rozpočet</b> je rozpočet podľa zákona o štátnom rozpočte
     vrátane jeho prípadných noviel počas roka (napríklad v roku 2020 sa výdavky novelou zvýšili z
     18,56 na 26,32 mld.&nbsp;€), tak ako ho vedie ministerstvo. <b>Skutočnosť</b> je skutočné čerpanie;
     konečná je po schválení štátneho záverečného účtu (naposledy za rok {DATA['final_account_through']}),
@@ -167,11 +179,14 @@ def main() -> None:
     Sumy pred rokom 2009 sú prepočítané z korún kurzom 30,1260&nbsp;Sk/€, tak ako ich zverejňuje ministerstvo.</p>
   <p><b>Dlaždice:</b> každé euro je priradené práve raz, podľa pravidiel v poradí: (1) platby
     Ministerstva zdravotníctva za poistencov štátu (ekonomická položka 642031) idú do Zdravotníctva,
-    hoci ich MF od roku 2013 vedie v sociálnom zabezpečení; odvod do rozpočtu EÚ (649005) a transfer
-    Sociálnej poisťovni (641003) zo Všeobecnej pokladničnej správy majú vlastné dlaždice; finančné
-    a rozpočtové záležitosti VPS (vrátane rezerv) tiež; (2) všetok výskum a vývoj ide do Vedy a výskumu;
-    (3) zvyšok podľa skupín COFOG. Skript skontroluje, že súčet dlaždíc sa pre každý rok a typ údajov
-    zhoduje so zverejneným celkom na euro presne; inak dáta nezverejní. Drobné rozdiely medzi dvoma
+    hoci ich MF od roku 2013 vedie v sociálnom zabezpečení; odvod do rozpočtu EÚ (649005) zo Všeobecnej
+    pokladničnej správy má vlastnú dlaždicu; finančné a rozpočtové záležitosti VPS (vrátane rezerv) tiež;
+    (2) všetok výskum a vývoj ide do Vedy a výskumu; (3) zvyšok štátu podľa skupín COFOG. Sociálna
+    poisťovňa podľa ekonomickej klasifikácie (jej rozdelenie podľa COFOG v schválených rozpočtoch 2006 až
+    2008 chýba): dôchodky zo starobného a invalidného poistenia (vrátane pozostalostných) do Dôchodkov,
+    nemocenské, materské, úrazové dávky, dávka v nezamestnanosti a správa poisťovne do Dávok.
+    Skript skontroluje, že súčet dlaždíc sa pre každý rok a typ údajov zhoduje na euro so zverejnenými
+    celkami (štát + Sociálna poisťovňa − transfery medzi nimi); inak dáta nezverejní. Drobné rozdiely medzi dvoma
     zdrojmi MF pri rozdelení položiek: {esc(residuals)} (zostávajú v pôvodnej dlaždici).</p>
   {next_year_note}
   <p><b>Dáta na stiahnutie:</b> <a href="data/stovka.json">stovka.json</a> (to, čo vidíš na stránke),

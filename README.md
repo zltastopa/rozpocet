@@ -3,7 +3,7 @@
 Štátny rozpočet Slovenska zmenšený na 100 €. Interaktívny treemap ukazuje,
 koľko z každej stovky výdavkov štátneho rozpočtu ide na školstvo, dávky,
 dôchodky, zdravotníctvo, políciu, armádu, dopravu či na obsluhu štátneho dlhu,
-za každý rok od 2006 po 2026, schválený rozpočet aj skutočné čerpanie.
+za roky 2006 až 2026; skutočné čerpanie len za uzavreté roky.
 
 Slovenská obdoba vizualizácie
 [„Kam jde tisícovka ze státního rozpočtu“](https://www.novinky.cz/clanek/ekonomika-statni-rozpocet-v-tisicikorune-pulka-jde-na-duchody-davky-a-uroky-z-dluhu-40597265)
@@ -21,8 +21,9 @@ vložené priamo v nej, otvorí sa aj offline):
   skupinách (Sociálne veci, Služby pre ľudí, Hospodárstvo, Bezpečnosť, Štát a
   dlh) a delia sa na menšie obdĺžniky podľa toho, z čoho sa skladajú.
 - **Bublinka po nabehnutí** (alebo ťuknutí): suma zo stovky, milióny eur,
-  percento výdavkov, rozpad na položky (aktuálna je zvýraznená), najväčšie
-  rozpočtové kapitoly, ktoré dlaždicu platia, zmena podielu oproti
+  percento výdavkov, rozdelenie na položky (vybraná položka je zvýraznená),
+  najväčšie rozpočtové kapitoly, tá istá dlaždica v druhom type údajov
+  (napr. rezervy schválené vs. skutočne minuté), zmena podielu oproti
   predchádzajúcemu roku a vysvetlivka.
 - **Ukazovatele:** výdavky, príjmy a „z každých 100 € výdavkov chýba X € v
   príjmoch“ (hotovostný schodok štátneho rozpočtu).
@@ -69,9 +70,12 @@ financií SR (licencia CC0):
      a rozpočtové záležitosti VPS vrátane rezerv;
   2. všetok výskum a vývoj → Veda a výskum;
   3. zvyšok podľa skupín COFOG.
-- **Typ údajov:** schválený = pôvodne schválený zákon; skutočnosť = čerpanie.
-  Skutočnosť za bežný rok sa nezobrazuje (je neúplná), posledný uzavretý rok je
-  označený ako predbežný. Rok 2005 chýba (bez údajov o čerpaní). Sumy pred
+- **Typ údajov:** schválený = rozpočet podľa zákona o štátnom rozpočte vrátane
+  noviel počas roka, tak ako ho vedie MF (napr. 2020: pôvodne 18,56, po novele
+  26,32 mld. €); skutočnosť = čerpanie. Skutočnosť je konečná po schválení
+  štátneho záverečného účtu (`FINAL_ACCOUNT_THROUGH` v `build.py`, teraz 2025,
+  schválený NR SR 6. 10. 2026); neskoršie uzavreté roky sú označené ako
+  predbežné, bežný rok sa nezobrazuje. Rok 2005 chýba (bez údajov o čerpaní). Sumy pred
   rokom 2009 sú prepočítané z korún kurzom 30,1260 Sk/€ tak, ako ich zverejňuje MF.
 - **Kontroly:** `build.py` nezapíše dáta, ak pre ktorýkoľvek rok a typ údajov
   nesedí (na 1 €) súčet listov COFOG so „Spolu“ kapitoly, súčet dlaždíc so

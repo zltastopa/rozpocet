@@ -365,7 +365,7 @@
     const m = state.measure, n = YEARS.length;
     const avail = tc.parentElement.clientWidth;
     const colW = Math.max(30, Math.min(44, (avail - 60) / n)), gap = Math.round(colW * .22);
-    const ml = 34, mr = 8, mt = 10, mb = 50, ph = 360;
+    const ml = 34, mr = 8, mt = 10, mb = 66, ph = 360;
     const W = Math.round(ml + mr + n * colW), H = mt + ph + mb;
     const svg = el("svg", { id: "tcsvg", viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img",
       "aria-label": `Podiel jednotlivých oblastí na výdavkoch štátneho rozpočtu ${YEARS[0]} až ${YEARS[n - 1]} (${MEASURE_LABEL[m]})` });
@@ -407,7 +407,7 @@
       const top = groupSums(e).sort((a, b) => b.v - a.v).slice(0, 3).map(s => `${s.g.name} ${eur(share(s.v, e))}`).join(", ");
       g.setAttribute("aria-label", `${y}: ${mld(e.total)}; ${top}. Enter zobrazí rok v hlavnom grafe.`);
     });
-    text(svg, ml, H - 2, "rast výdavkov oproti predch. roku · ● poznámka k roku", "ax", 10, "#9aa0ab");
+    text(svg, ml, H - 4, "pod rokom: rast výdavkov oproti predchádzajúcemu roku · ● poznámka k roku (v bublinke)", "ax", 10, "#9aa0ab");
     tc.replaceChildren(svg);
   }
   function colTip(y, tileId) {
@@ -458,7 +458,7 @@
     if (which === "tm") return {
       title: `Kam ide stovka zo štátneho rozpočtu ${state.year}`,
       sub: `100 € = ${mil(e.total)} výdavkov (${meas}${e.provisional ? ", predbežné údaje" : ""})`,
-      legend: true
+      legend: true, extra: $("small").textContent
     };
     const prov = YEARS.some(y => (entry(y) || {}).provisional);
     return { title: `Stovka zo štátneho rozpočtu v čase, ${YEARS[0]} – ${YEARS[YEARS.length - 1]}`,
@@ -481,7 +481,7 @@
       const CW = Math.max(W + 2 * pad, 640);
       const probe = document.createElement("canvas").getContext("2d");
       probe.font = `12px ${FONT}`;
-      const scope = wrapLines(probe, SCOPE, CW - 2 * pad);
+      const scope = (meta.extra ? wrapLines(probe, meta.extra, CW - 2 * pad) : []).concat(wrapLines(probe, SCOPE, CW - 2 * pad));
       const legendItems = meta.legend ? groupSums(entry()).map(s => s.g) : [];
       const head = 58, legendH = legendItems.length ? 26 : 0, foot = 26 + scope.length * 16;
       const c = document.createElement("canvas");

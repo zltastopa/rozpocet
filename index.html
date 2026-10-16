@@ -70,7 +70,7 @@ svg text { pointer-events:none; }
 .legend span.sw { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
 .legend b { margin-left:6px; font-variant-numeric:tabular-nums; }
 .small-tiles { font-size:13.5px; margin:6px 0 0; color:#3d4555; }
-.small-tiles button { font:inherit; border:0; background:none; padding:0; color:inherit; cursor:pointer;
+.small-tiles button { font:inherit; border:0; background:none; padding:0; color:inherit; cursor:pointer; text-align:left;
                       text-decoration:underline dotted #9aa0ab; text-underline-offset:3px; }
 .event { font-size:13.5px; background:#f1f4fa; border-radius:8px; padding:7px 11px; margin:10px 0 0; }
 ol.foot { font-size:12.5px; color:#3d4555; margin:12px 0 0; padding-left:20px; }
@@ -417,9 +417,16 @@ footer .parent-link { display:inline-block; margin-top:6px; font-weight:600; }
       const amt = eur(s);
       const pad = 8, bw = labelBox.w - 2 * pad;
       if (labelBox.h >= big + 22 && bw >= textW(amt, big, 700)) {
-        text(g, labelBox.x + pad, labelBox.y + pad + big * .85, amt, "tl-amt", big, ink);
         const maxLines = Math.max(1, Math.min(3, Math.floor((labelBox.h - pad - big - 4) / 15)));
         const lines = wrapName(name, 13, bw, maxLines);
+        // when the label sits on the whole tile, sub-rectangle lines would cross it:
+        // paint a tile-coloured backdrop exactly behind the text block
+        if (labelBox === r && g.querySelector(".sub")) {
+          const tw = Math.max(textW(amt, big, 700), ...lines.map(l => textW(l, 13, 500)));
+          el("rect", { x: r.x + 1, y: r.y + 1, width: Math.min(r.w - 2, tw + pad * 1.5), height: Math.min(r.h - 2, pad + big + 6 + lines.length * 15),
+            fill, "pointer-events": "none" }, g);
+        }
+        text(g, labelBox.x + pad, labelBox.y + pad + big * .85, amt, "tl-amt", big, ink);
         lines.forEach((ln, i) => text(g, labelBox.x + pad, labelBox.y + pad + big + 15 + i * 15, ln, "tl-name", 13, ink));
         if (!lines.length || lines[lines.length - 1].endsWith("…")) small.push(id);
       } else if (r.h >= 22 && r.w - 8 >= textW(amt, 12, 700)) {
@@ -566,7 +573,7 @@ footer .parent-link { display:inline-block; margin-top:6px; font-weight:600; }
     setState(n);
     yearsBox.querySelector(`[data-year="${n}"]`).focus();
   });
-  window.addEventListener("hashchange", () => { readHash(); render(); });
+  window.addEventListener("hashchange", () => { hideTip(); readHash(); render(); });
 
   // ---- time chart: 100 % stacked columns, fixed band order & colours ----
   const tc = $("tc");

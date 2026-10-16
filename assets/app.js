@@ -201,9 +201,16 @@
       const amt = eur(s);
       const pad = 8, bw = labelBox.w - 2 * pad;
       if (labelBox.h >= big + 22 && bw >= textW(amt, big, 700)) {
-        text(g, labelBox.x + pad, labelBox.y + pad + big * .85, amt, "tl-amt", big, ink);
         const maxLines = Math.max(1, Math.min(3, Math.floor((labelBox.h - pad - big - 4) / 15)));
         const lines = wrapName(name, 13, bw, maxLines);
+        // when the label sits on the whole tile, sub-rectangle lines would cross it:
+        // paint a tile-coloured backdrop exactly behind the text block
+        if (labelBox === r && g.querySelector(".sub")) {
+          const tw = Math.max(textW(amt, big, 700), ...lines.map(l => textW(l, 13, 500)));
+          el("rect", { x: r.x + 1, y: r.y + 1, width: Math.min(r.w - 2, tw + pad * 1.5), height: Math.min(r.h - 2, pad + big + 6 + lines.length * 15),
+            fill, "pointer-events": "none" }, g);
+        }
+        text(g, labelBox.x + pad, labelBox.y + pad + big * .85, amt, "tl-amt", big, ink);
         lines.forEach((ln, i) => text(g, labelBox.x + pad, labelBox.y + pad + big + 15 + i * 15, ln, "tl-name", 13, ink));
         if (!lines.length || lines[lines.length - 1].endsWith("…")) small.push(id);
       } else if (r.h >= 22 && r.w - 8 >= textW(amt, 12, 700)) {
@@ -350,7 +357,7 @@
     setState(n);
     yearsBox.querySelector(`[data-year="${n}"]`).focus();
   });
-  window.addEventListener("hashchange", () => { readHash(); render(); });
+  window.addEventListener("hashchange", () => { hideTip(); readHash(); render(); });
 
   // ---- time chart: 100 % stacked columns, fixed band order & colours ----
   const tc = $("tc");

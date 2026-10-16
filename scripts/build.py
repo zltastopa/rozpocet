@@ -371,7 +371,7 @@ def check_641003(year: int, problems: list[str]) -> None:
             problems.append(f"{year}: missing 641003 scan for kapitola {k}")
             continue
         data = load(spath)["data"]
-        if not isinstance(data, dict) or "success" not in data or not isinstance(data.get("payload", []), list):
+        if not isinstance(data, dict) or data.get("success") is not True or not isinstance(data.get("payload", []), list):
             problems.append(f"{year}: malformed 641003 scan for kapitola {k}")
             continue
         for x in data.get("payload") or []:

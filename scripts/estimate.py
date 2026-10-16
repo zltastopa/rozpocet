@@ -75,6 +75,9 @@ def detail_meta(year: int) -> dict:
 
 
 def pieces(annex: list[dict]) -> list[dict]:
+    """Disjoint pieces: every listed node (program or subprogram) minus its directly
+    nested listed subprograms. Subprograms can nest (0HW01 > 0HW0101), so a node's
+    direct children are the listed codes under it with no other listed code between."""
     out = []
     by_kap = defaultdict(list)
     for r in annex:
@@ -82,18 +85,21 @@ def pieces(annex: list[dict]) -> list[dict]:
     for kap, rows in by_kap.items():
         programs = [r for r in rows if r["podprogram"] == "0"]
         subs = [r for r in rows if r["podprogram"] == "1"]
-        for p in programs:
-            mine = [s for s in subs if s["program"].startswith(p["program"]) and s["program"] != p["program"]]
-            rest = int(p["suma"]) - sum(int(s["suma"]) for s in mine)
-            if rest < 0:
-                raise ValueError(f"kapitola {kap} program {p['program']}: subprograms exceed the program")
-            out.append({"kap": kap, "code": p["program"], "name": p["nazov"], "amount": rest,
-                        "exclude": [s["program"] for s in mine]})
-            out += [{"kap": kap, "code": s["program"], "name": s["nazov"], "amount": int(s["suma"]), "exclude": []}
-                    for s in mine]
         orphans = [s for s in subs if not any(s["program"].startswith(p["program"]) for p in programs)]
         if orphans:
             raise ValueError(f"kapitola {kap}: subprograms without a program {[s['program'] for s in orphans]}")
+        for p in programs:
+            nodes = [p] + [s for s in subs if s["program"].startswith(p["program"]) and s["program"] != p["program"]]
+            for n in nodes:
+                code = n["program"]
+                below = [s for s in nodes if s["program"] != code and s["program"].startswith(code)]
+                direct = [s for s in below if not any(o is not s and s["program"].startswith(o["program"])
+                                                      for o in below)]
+                rest = int(n["suma"]) - sum(int(s["suma"]) for s in direct)
+                if rest < 0:
+                    raise ValueError(f"kapitola {kap} {code}: listed subprograms exceed it")
+                out.append({"kap": kap, "code": code, "name": n["nazov"], "amount": rest,
+                            "exclude": [s["program"] for s in direct]})
     return [p for p in out if p["amount"]]
 
 
@@ -123,7 +129,10 @@ def estimate(year: int, classify, kap_names: dict[str, str]) -> tuple[dict, dict
         for level, rows, names, same_kap in (("program_r1", r1, n1, True), ("program_r2", r2, n2, True),
                                              ("program_ina_kapitola", r1, n1, False)):
             if same_kap:
-                ident = same_name(p["name"], names.get((p["kap"], p["code"])))
+                # cross-ministry programs are named only in the gestor's kapitola
+                known = names.get((p["kap"], p["code"])) or next(
+                    (nm for (k, c), nm in names.items() if c == p["code"]), None)
+                ident = same_name(p["name"], known)
                 sh = shares(rows, lambda k, prg: k == p["kap"] and m(prg)) if ident is not False else {}
             else:
                 cands = {k for (k, c), nm in names.items() if c == p["code"] and same_name(p["name"], nm)}

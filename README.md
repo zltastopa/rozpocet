@@ -1,9 +1,10 @@
 # Kam ide stovka
 
-Štátny rozpočet Slovenska zmenšený na 100 €. Interaktívny treemap ukazuje,
-koľko z každej stovky výdavkov štátneho rozpočtu ide na školstvo, dávky,
-dôchodky, zdravotníctvo, políciu, armádu, dopravu či na obsluhu štátneho dlhu,
-za roky 2006 až 2026; skutočné čerpanie len za uzavreté roky.
+Štátny rozpočet Slovenska a Sociálna poisťovňa zmenšené na 100 €. Interaktívny
+treemap ukazuje, koľko z každej stovky ide na dôchodky, dávky, školstvo,
+zdravotníctvo, políciu, armádu, dopravu či na obsluhu štátneho dlhu, za roky
+2006 až 2026; skutočné čerpanie len za uzavreté roky. V schválenom rozpočte 2026
+ide na dôchodky 30,72 €, na dávky 11,47 € a na školstvo 11,33 €.
 
 Slovenská obdoba vizualizácie
 [„Kam jde tisícovka ze státního rozpočtu“](https://www.novinky.cz/clanek/ekonomika-statni-rozpocet-v-tisicikorune-pulka-jde-na-duchody-davky-a-uroky-z-dluhu-40597265)
@@ -22,11 +23,12 @@ vložené priamo v nej, otvorí sa aj offline):
   dlh) a delia sa na menšie obdĺžniky podľa toho, z čoho sa skladajú.
 - **Bublinka po nabehnutí** (alebo ťuknutí): suma zo stovky, milióny eur,
   percento výdavkov, rozdelenie na položky (vybraná položka je zvýraznená),
-  najväčšie rozpočtové kapitoly, tá istá dlaždica v druhom type údajov
-  (napr. rezervy schválené vs. skutočne minuté), zmena podielu oproti
-  predchádzajúcemu roku a vysvetlivka.
-- **Ukazovatele:** výdavky, príjmy a „z každých 100 € výdavkov chýba X € v
-  príjmoch“ (hotovostný schodok štátneho rozpočtu).
+  najväčšie rozpočtové kapitoly („Kto to platí“, vrátane Sociálnej poisťovne),
+  tá istá dlaždica v druhom type údajov (napr. rezervy schválené vs. skutočne
+  minuté), zmena podielu oproti predchádzajúcemu roku a vysvetlivka.
+- **Ukazovatele:** výdavky spolu, z toho Sociálna poisťovňa a štátny rozpočet,
+  schodok štátneho rozpočtu na 100 € zobrazených výdavkov (nie je to spoločný
+  schodok štátu a Sociálnej poisťovne).
 - **Stovka v čase:** stopercentné stĺpce 2006 až 2026 s pevným poradím a
   farbami dlaždíc; kliknutím na stĺpec sa rok zobrazí v treemape.
 - **Kopírovať / stiahnuť PNG** pre oba grafy, s názvom, rokom, rozsahom údajov
@@ -34,9 +36,10 @@ vložené priamo v nej, otvorí sa aj offline):
 - Tabuľka hodnôt, ovládanie klávesnicou, zdieľateľný odkaz na rok
   (`#2025-skutocnost`).
 
-Napríklad v schválenom rozpočte na rok 2026 ide z každých 100 € na školstvo
-15,72 €, na dávky 10,44 €, na dôchodky a zdravotníctvo po 9,32 € a na obsluhu
-štátneho dlhu 6,20 €. Na každých 100 € výdavkov chýba v príjmoch 15,60 €.
+Napríklad v schválenom rozpočte na rok 2026 ide z každých 100 € na dôchodky
+30,72 €, na dávky 11,47 €, na školstvo 11,33 €, na zdravotníctvo 6,72 € a na
+obsluhu štátneho dlhu 4,47 €. Schodok štátneho rozpočtu je 11,24 € na každých
+100 € zobrazených výdavkov.
 
 ## Odkiaľ sú dáta
 
@@ -49,25 +52,38 @@ financií SR (licencia CC0):
 2. **Zoznam kapitol a zverejnené celkové príjmy a výdavky** štátneho rozpočtu
    z rozhrania, ktoré používa samotný portál
    (`/rest/api/rozpocet/rozpoctyPodorganizaciiVSOrg/…`, `/rest/api/rozpocet/rozpoctyVSOrg/…`).
-3. **Prienik kapitola × COFOG × ekonomická klasifikácia** pre päť buniek, ktoré
-   treba rozdeliť podľa ekonomickej položky
+3. **Prienik kapitola × COFOG × ekonomická klasifikácia** pre šesť buniek, ktoré
+   treba rozdeliť podľa ekonomickej položky, a pre transfery 641003 všetkých kapitol
    (`/rest/api/rozpocet/polozkyRozpocetuVSOrg/SK/{kapitola}/{rok}/VS/false/EKV?FNC={cofog}…`).
+4. **Výdavky Sociálnej poisťovne** (organizácia 203) podľa ekonomickej
+   klasifikácie z toho istého rozhrania
+   (`/rest/api/rozpocet/polozkyRozpocetuVSOrg/SK/203/{rok}/VS/false/EKV?EKV=SpoluV&FNC=Spolu`).
 
 ## Metodika
 
-- **Hranica:** štátny rozpočet = súčet kapitol, presne ako v zákone o štátnom
-  rozpočte (pre rok 2026 32 899 667 683 €, zákon č. 303/2025 Z. z.). Súhrn
-  „Štátny rozpočet“ z API sa nepoužíva, lebo pridáva aj účty Štátny dlh, SURO a
-  SFA a niektoré peniaze tak počíta dvakrát. Transfery Sociálnej poisťovni a
-  zdravotným poisťovniam sú zahrnuté, ich vlastné výdavky z odvodov nie.
+- **Hranica:** stovka = výdavky štátneho rozpočtu (súčet kapitol, presne ako v
+  zákone o štátnom rozpočte; pre rok 2026 32 899 667 683 €) + výdavky Sociálnej
+  poisťovne − transfer zo štátneho rozpočtu do Sociálnej poisťovne (VPS, položka
+  641003; 2026: 2,34 mld. €, rovnako ako jej príjem „transfer zo ŠR“) − presuny
+  medzi vlastnými fondmi Sociálnej poisťovne (jej 641003, v schválených
+  rozpočtoch vždy nula). Dôvod: na Slovensku vypláca dôchodky Sociálna poisťovňa
+  mimo štátneho rozpočtu, v Česku ich platí priamo štátny rozpočet; bez nej by
+  stovka dôchodky skoro nevidela. Mimo stovky sú zdravotné poisťovne (ako v
+  Česku), obce a kraje. Kontrola za rok 2023 voči Správe o hospodárení
+  Sociálnej poisťovne: 11,92 vs. 11,95 mld. €, 34 mil. € nevysvetlených.
+  Súhrn „Štátny rozpočet“ z API sa nepoužíva, lebo pridáva aj účty Štátny dlh,
+  SURO a SFA a niektoré peniaze tak počíta dvakrát.
+- **Sociálna poisťovňa** je triedená podľa ekonomickej klasifikácie (jej COFOG
+  v schválených rozpočtoch 2006 až 2008 chýba): dôchodky zo starobného a
+  invalidného poistenia → Dôchodky; nemocenské, materské a úrazové dávky, dávka v
+  nezamestnanosti a správa poisťovne → Dávky.
 - **Dlaždice:** každé euro je priradené práve raz, podľa pravidiel v poradí
   (`scripts/build.py`):
   1. bunky rozdelené podľa ekonomickej položky: platby Ministerstva
      zdravotníctva za poistencov štátu (642031) → Zdravotníctvo (MF ich od roku
      2013 vedie v sociálnom zabezpečení, predtým v zdravotníctve, takže
-     porovnanie v čase platí); odvod do rozpočtu EÚ (649005) a transfer
-     Sociálnej poisťovni (641003) zo Všeobecnej pokladničnej správy; finančné
-     a rozpočtové záležitosti VPS vrátane rezerv;
+     porovnanie v čase platí); odvod do rozpočtu EÚ (649005) zo Všeobecnej
+     pokladničnej správy; finančné a rozpočtové záležitosti VPS vrátane rezerv;
   2. všetok výskum a vývoj → Veda a výskum;
   3. zvyšok podľa skupín COFOG.
 - **Typ údajov:** schválený = rozpočet podľa zákona o štátnom rozpočte vrátane
@@ -79,27 +95,21 @@ financií SR (licencia CC0):
   rokom 2009 sú prepočítané z korún kurzom 30,1260 Sk/€ tak, ako ich zverejňuje MF.
 - **Kontroly:** `build.py` nezapíše dáta, ak pre ktorýkoľvek rok a typ údajov
   nesedí (na 1 €) súčet listov COFOG so „Spolu“ kapitoly, súčet dlaždíc so
-  zverejneným celkom štátneho rozpočtu, alebo rozdelenie bunky podľa
+  zverejnenými celkami (štát + Sociálna poisťovňa − transfery), ak sa v
+  ktorejkoľvek kapitole objaví nový transfer 641003 (päť známych drobných,
+  spolu pod 0,3 mil. €, je vymenovaných), alebo ak rozdelenie bunky podľa
   ekonomickej klasifikácie o viac ako 0,1 %. Jediný drobný rozdiel medzi dvoma
   zdrojmi MF (1 384,98 €, 2006) je zverejnený v `data/stovka.json` a zostáva v
   pôvodnej dlaždici. `fetch.py` končí chybou, ak sa niečo nepodarí stiahnuť.
 - **Zoznam kapitol:** zoznam kapitol pre rok niekedy vynechá kapitolu s
   výdavkami (kapitola 55 v roku 2011, 469 897 €), preto sa každý rok pýtame na
   všetky kódy kapitol zo všetkých rokov.
-- **Rok 2027 je odhad.** NR SR schválila rozpočet 14. 10. 2026, ale jeho
-  rozdelenie podľa funkčnej klasifikácie ministerstvo zatiaľ nezverejnilo.
-  Celkové výdavky (35 665 744 906 €) a príjmy sú presné, z prílohy č. 1. Rozdelenie
-  do dlaždíc odhaduje `scripts/estimate.py`: sumu každého programu a vybraného
-  podprogramu z prílohy č. 4 (`data/navrh_2027_programy.csv`, súčty sedia na
-  euro s každou kapitolou) rozdelí podľa toho, ako sa ten istý program delil v
-  schválenom rozpočte na rok 2026 (údaje po riadkoch z `/api/vs/schvaleny`),
-  inak 2025, inak podľa celej kapitoly. Ak MF v zozname programov uvádza názov,
-  program sa prevezme len pri zhode názvu; pri 4,09 mld. € (programy, pri ktorých
-  zoznam uvádza len podprogramy, napr. 0D6, 0HF, 0H4) sa dá overiť len zhoda kódu.
-  Spätný test na roku 2026 (rovnaká podrobnosť prílohy, základ 2025): chyba
-  dlaždice v priemere 0,44 € zo stovky, najviac 1,60 €. Je to chyba v minulosti,
-  nie záruka pre rok 2027. Na stránke je odhad výrazne označený (šrafovanie,
-  „≈“, „odhad“). Keď MF zverejní skutočné členenie, odhad sa automaticky nahradí.
+- **Rok 2027 zatiaľ chýba.** Štátny rozpočet je schválený, ale rozpočet
+  Sociálnej poisťovne na rok 2027 a rozdelenie výdavkov štátu podľa oblastí ešte
+  nie sú na rozpocet.sk. Odhad z programov (`scripts/estimate.py`, príloha č. 4
+  v `data/navrh_2027_programy.csv`, spätný test na 2026: chyba dlaždice v
+  priemere 0,44 € zo stovky) je pripravený, ale bez rozpočtu Sociálnej poisťovne
+  by miešal dve rôzne stovky, preto sa nezobrazuje. Doplní sa, keď budú údaje.
 
 Rozhodnutia o hraniciach, kategóriách a zobrazení boli prediskutované a
 odsúhlasené v nezávislej revízii (Codex).

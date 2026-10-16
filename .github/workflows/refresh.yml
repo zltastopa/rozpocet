@@ -2,7 +2,8 @@ name: Refresh budget data
 
 # Re-downloads every year from rozpocet.sk into an empty cache (so revisions of
 # older years are picked up too), rebuilds the dataset and commits data/ +
-# index.html only when the underlying numbers (data/kapitola_fnc.csv) changed.
+# index.html only when the numbers changed: kapitola_fnc.csv (expenditure) or
+# stovka.json ignoring its timestamps (revenue, provisional status, years).
 # build.py refuses to write data/ if any year does not reconcile with the
 # published state-budget total, so a broken download never gets deployed.
 # A push made with the default GITHUB_TOKEN does not trigger other workflows,
@@ -41,7 +42,22 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data index.html
-          if git diff --cached --quiet -- data/kapitola_fnc.csv; then
+          # stovka.json minus volatile timestamps: catches revenue-only revisions,
+          # newly available years and changes of provisional status
+          json_changed=$(python - <<'EOF'
+          import json, subprocess
+          def norm(text):
+              d = json.loads(text)
+              d.pop("generated", None)
+              for k in ("retrieved_from", "retrieved_to"):
+                  d["source"].pop(k, None)
+              return d
+          old = subprocess.run(["git", "show", "HEAD:data/stovka.json"], capture_output=True, text=True).stdout
+          new = open("data/stovka.json", encoding="utf-8").read()
+          print("yes" if not old or norm(old) != norm(new) else "no")
+          EOF
+          )
+          if git diff --cached --quiet -- data/kapitola_fnc.csv && [ "$json_changed" = "no" ]; then
             echo "No data changes; skipping commit."
           else
             git commit -m "chore: refresh state budget data from rozpocet.sk"

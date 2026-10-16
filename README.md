@@ -1,7 +1,7 @@
 # Kam ide stovka
 
-Štátny rozpočet Slovenska a Sociálna poisťovňa zmenšené na 100 €. Interaktívny
-treemap ukazuje, koľko z každej stovky ide na dôchodky, dávky, školstvo,
+Štátna kasa Slovenska, teda štátny rozpočet a Sociálna poisťovňa spolu, zmenšená
+na 100 €. Interaktívny treemap ukazuje, koľko z každej stovky ide na dôchodky, dávky, školstvo,
 zdravotníctvo, políciu, armádu, dopravu či na obsluhu štátneho dlhu, za roky
 2006 až 2026; skutočné čerpanie len za uzavreté roky. V schválenom rozpočte 2026
 ide na dôchodky 30,72 €, na dávky 11,47 € a na školstvo 11,33 €.

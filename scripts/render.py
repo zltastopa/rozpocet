@@ -91,10 +91,10 @@ def main() -> None:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kam ide stovka: štátny rozpočet SR zmenšený na 100 € | Projekt Žltá Stopa</title>
-<meta name="description" content="Na čo ide každých 100 € zo štátneho rozpočtu Slovenska? Interaktívne, za roky {first} až {last}, z otvorených dát Ministerstva financií SR. Projekt Žltá Stopa.">
-<meta property="og:title" content="Kam ide stovka zo štátneho rozpočtu | Projekt Žltá Stopa">
-<meta property="og:description" content="Štátny rozpočet Slovenska zmenšený na 100 €. Školstvo, dávky, dôchodky, dlh, obrana… za roky {first} až {last}.">
+<title>Kam ide stovka zo štátnej kasy | Projekt Žltá Stopa</title>
+<meta name="description" content="Na čo ide každých 100 € zo štátnej kasy Slovenska, teda zo štátneho rozpočtu a Sociálnej poisťovne? Interaktívne, za roky {first} až {last}, z otvorených dát Ministerstva financií SR. Projekt Žltá Stopa.">
+<meta property="og:title" content="Kam ide stovka zo štátnej kasy | Projekt Žltá Stopa">
+<meta property="og:description" content="Štátny rozpočet a Sociálna poisťovňa zmenšené na 100 €. Dôchodky, dávky, školstvo, dlh, obrana… za roky {first} až {last}.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://{SITE}/">
 <style>
@@ -110,11 +110,11 @@ def main() -> None:
       <img src="{BADGE}" alt="Projekt Žltá Stopa" width="118" height="38">
     </a>
   </div>
-  <p class="tagline">Štátny rozpočet a Sociálna poisťovňa zmenšené na 100&nbsp;€</p>
+  <p class="tagline">Štátna kasa Slovenska zmenšená na 100&nbsp;€</p>
   <p class="sub">Keby štát minul namiesto miliárd len jednu stovku, koľko by išlo na dôchodky, školy,
     dávky, armádu či úroky z dlhu? Každá dlaždica predstavuje podiel na výdavkoch, za roky {first} až {last}.
     Keď na dlaždicu prejdeš kurzorom alebo na ňu ťukneš, uvidíš, z čoho sa skladá a kto ju platí.</p>
-  <p class="scope"><b>Čo je v stovke:</b> štátny rozpočet (súčet kapitol zo zákona o štátnom rozpočte) a
+  <p class="scope"><b>Čo je v štátnej kase:</b> štátny rozpočet (súčet kapitol zo zákona o štátnom rozpočte) a
     Sociálna poisťovňa, ktorá na Slovensku vypláca dôchodky a ďalšie dávky z odvodov. V Česku sú dôchodky
     priamo v štátnom rozpočte, u nás ich bez Sociálnej poisťovne nevidno. Peniaze, ktoré štát Sociálnej
     poisťovni posiela, počítame len raz, tam, kde ich vyplatí. <b>Mimo stovky</b> sú zdravotné poisťovne

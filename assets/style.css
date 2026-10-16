@@ -11,7 +11,7 @@ a { color:var(--accent); }
 header h1 { font-size:40px; margin:0 0 2px; letter-spacing:-.025em; line-height:1.15; }
 .tagline { font-size:19px; font-weight:600; margin:0 0 10px; }
 header p.sub { color:var(--muted); margin:0 0 10px; max-width:72ch; }
-header p.scope { margin:0 0 6px; max-width:72ch; font-size:14px; color:#3d4555;
+header p.scope, p.dlh-note { margin:0 0 6px; max-width:72ch; font-size:14px; color:#3d4555;
                  background:#fff8dc; border-left:4px solid var(--yellow); padding:9px 12px; border-radius:0 8px 8px 0; }
 
 .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:22px 0 22px; }

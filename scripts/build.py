@@ -83,8 +83,9 @@ TILES = [
     ("obrana", "bezp", "Obrana", None, "COFOG 02 za všetky kapitoly, bez výskumu a vývoja."),
     ("policia", "bezp", "Polícia, hasiči a justícia", None, None),
     ("dlh", "stat", "Obsluha štátneho dlhu", None,
-     "Úroky a ďalšie náklady štátneho dlhu. Od roku 2013 ich Všeobecná pokladničná správa "
-     "posiela ako transfer organizácii, ktorá dlh spravuje (program „Dlhová služba“)."),
+     "Úroky a ďalšie náklady štátneho dlhu. Od roku 2012 ich Všeobecná pokladničná správa "
+     "posiela ako transfer organizácii, ktorá dlh spravuje (program „Dlhová služba“); úroky "
+     "zaplatené v danom roku sa preto môžu od tejto sumy líšiť."),
     ("eu", "stat", "Odvod do rozpočtu EÚ", "Odvod do EÚ",
      "Príspevok Slovenska do spoločného rozpočtu Európskej únie (Všeobecná pokladničná správa)."),
     ("vps", "stat", "Finančné a rozpočtové záležitosti VPS (vrátane rezerv)", "Financie VPS vrátane rezerv",

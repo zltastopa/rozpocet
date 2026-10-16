@@ -154,6 +154,18 @@ def main() -> None:
   <div class="chart-tools" data-chart="tc"><button class="ct" data-act="copy" type="button">Kopírovať obrázok</button><button class="ct" data-act="download" type="button">Stiahnuť PNG</button></div>
 </section>
 
+<section>
+  <h2>Obsluha štátneho dlhu v čase</h2>
+  <p class="desc">Hore koľko štát v danom roku dal na obsluhu dlhu v miliardách eur (bežné ceny, bez
+    očistenia o infláciu), dole koľko je to zo stovky. Typ údajov sa riadi prepínačom hore.</p>
+  <p class="scope dlh-note"><b>Pozor:</b> je to výdavok štátneho rozpočtu na obsluhu dlhu. Do roku 2011 ním štát
+    platil úroky priamo, od roku 2012 je to transfer organizácii, ktorá dlh spravuje, a tá z neho úroky platí. Úroky
+    zaplatené v danom roku sa preto môžu od tejto sumy líšiť. Výrazne to vidno v rokoch 2020 a 2021, keď štát skutočne
+    poslal len 0,80 a 0,66 mld.&nbsp;€ zo schválených 1,16 a 1,11 mld.&nbsp;€.</p>
+  <div class="tc-scroll"><div id="dc"></div></div>
+  <div class="chart-tools" data-chart="dc"><button class="ct" data-act="copy" type="button">Kopírovať obrázok</button><button class="ct" data-act="download" type="button">Stiahnuť PNG</button></div>
+</section>
+
 <footer>
   <h2>Metodika a zdroje</h2>
   <p><b>Zdroj:</b> {esc(src['name'])}. Výdavky každej kapitoly štátneho rozpočtu podľa funkčnej

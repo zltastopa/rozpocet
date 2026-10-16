@@ -307,7 +307,7 @@
   // "Menšie dlaždice" button or a time-chart column); ←/→ move between tiles
   document.addEventListener("keydown", ev => {
     if ((ev.key !== "ArrowDown" && ev.key !== "ArrowUp") || tip.hidden) return;
-    if (!document.activeElement || !document.activeElement.closest("#tm, #small, #tc")) return;
+    if (!document.activeElement || !document.activeElement.closest("#tm, #small, #tc, #dc")) return;
     ev.preventDefault();
     tip.scrollTop += ev.key === "ArrowDown" ? 60 : -60;
   });
@@ -524,10 +524,105 @@
     if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); setState(+c.dataset.year); tc.querySelector(`.col[data-year="${c.dataset.year}"]`).focus(); }
   });
 
+  // ---- debt service over time: bars in mld. € (top), € zo stovky (bottom), shared years ----
+  const dc = $("dc");
+  const DEBT_NOTE = "Výdavok štátneho rozpočtu na obsluhu dlhu; od roku 2012 je to transfer organizácii, ktorá dlh spravuje, a úroky zaplatené v danom roku sa od neho môžu líšiť. Bežné ceny.";
+  function debtVal(y, m = state.measure) {
+    const e = entry(y, m);
+    if (!e) return null;
+    const v = (e.tiles.dlh || {}).v || 0;
+    return { v, s: share(v, e), est: !!e.estimate, prov: !!e.provisional };
+  }
+  function drawDebt() {
+    const n = YEARS.length, avail = dc.parentElement.clientWidth;
+    const colW = Math.max(30, Math.min(44, (avail - 60) / n));
+    const ml = 40, mr = 22, mt = 22, h1 = 190, gapP = 34, h2 = 120, mb = 40;
+    const W = Math.round(ml + mr + n * colW), H = mt + h1 + gapP + h2 + mb;
+    const vals = YEARS.map(y => debtVal(y));
+    const maxV = Math.max(...vals.filter(Boolean).map(d => d.v)) / 1e9;
+    const topV = Math.ceil(maxV * 2) / 2, topS = Math.ceil(Math.max(...vals.filter(Boolean).map(d => d.s)));
+    const svg = el("svg", { id: "dcsvg", viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img",
+      "aria-label": `Obsluha štátneho dlhu ${YEARS[0]} až ${YEARS[n - 1]} (${MEASURE_LABEL[state.measure]})` });
+    const y1 = v => mt + h1 - h1 * v / topV, y2 = s => mt + h1 + gapP + h2 - h2 * s / topS;
+    text(svg, ml, mt - 8, "mld. €", "ax", 11, "#6b7280");
+    for (let t = 0; t <= topV + 1e-9; t += topV > 1 ? 0.5 : 0.25) {
+      el("line", { x1: ml, x2: W - mr, y1: y1(t), y2: y1(t), stroke: "#e8eaf0" }, svg);
+      text(svg, ml - 6, y1(t) + 4, String(t).replace(".", ","), "ax", 11, "#6b7280").setAttribute("text-anchor", "end");
+    }
+    text(svg, ml, mt + h1 + gapP - 8, "€ zo stovky", "ax", 11, "#6b7280");
+    for (let t = 0; t <= topS; t += topS > 4 ? 2 : 1) {
+      el("line", { x1: ml, x2: W - mr, y1: y2(t), y2: y2(t), stroke: "#e8eaf0" }, svg);
+      text(svg, ml - 6, y2(t) + 4, String(t), "ax", 11, "#6b7280").setAttribute("text-anchor", "end");
+    }
+    if (!svg.querySelector("#hatch2")) {
+      const pat = el("pattern", { id: "hatch2", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, el("defs", {}, svg));
+      el("line", { x1: 0, y1: 0, x2: 0, y2: 6, stroke: "#fff", "stroke-width": 2, "stroke-opacity": .7 }, pat);
+    }
+    // line in the bottom panel: a gap wherever the measure has no data (never bridged)
+    let path = "", pen = false;
+    YEARS.forEach((y, i) => {
+      const d = vals[i], cx = ml + i * colW + colW / 2;
+      if (!d) { pen = false; return; }
+      path += (pen ? "L" : "M") + cx + " " + y2(d.s) + " "; pen = true;
+    });
+    el("path", { d: path, fill: "none", stroke: COLOR.dlh, "stroke-width": 2.5 }, svg);
+    YEARS.forEach((y, i) => {
+      const d = vals[i], x = ml + i * colW, cx = x + colW / 2, gw = colW * .22;
+      const g = el("g", { class: "col" + (y === state.year ? " sel" : ""), "data-year": y, tabindex: d ? 0 : -1, role: "button" }, svg);
+      el("rect", { class: "colbg", x, y: mt, width: colW, height: h1 + gapP + h2, fill: "transparent" }, g);
+      text(g, cx, H - mb + 16, "’" + String(y).slice(2), "yl", 11.5, "#6b7280").setAttribute("text-anchor", "middle");
+      if (!d) {
+        text(g, cx, mt + h1 - 6, "–", "ax", 12, "#9aa0ab").setAttribute("text-anchor", "middle");
+        g.setAttribute("aria-label", `${y}: ${MEASURE_LABEL[state.measure]} zatiaľ nie je k dispozícii`);
+        return;
+      }
+      el("rect", { x: x + gw / 2, y: y1(d.v / 1e9), width: colW - gw, height: mt + h1 - y1(d.v / 1e9), fill: COLOR.dlh,
+        "fill-opacity": d.est ? .6 : 1 }, g);
+      el("circle", { cx, cy: y2(d.s), r: 3.2, fill: d.est ? "#fff" : COLOR.dlh, stroke: COLOR.dlh, "stroke-width": 1.5 }, g);
+      if (d.est) {
+        el("rect", { x: x + gw / 2, y: y1(d.v / 1e9), width: colW - gw, height: mt + h1 - y1(d.v / 1e9), fill: "url(#hatch2)", "pointer-events": "none" }, g);
+        text(g, cx, H - mb + 30, "odhad", "ax", 9.5, "#8a5a00").setAttribute("text-anchor", "middle");
+      }
+      g.setAttribute("aria-label", `${y}: ${mld(d.v)}, ${eur(d.s)} zo stovky${d.est ? ", odhad" : ""}. Enter zobrazí rok v hlavnom grafe.`);
+    });
+    dc.replaceChildren(svg);
+  }
+  function debtTip(y) {
+    const d = debtVal(y), meas = MEASURE_LABEL[state.measure];
+    if (!d) return `<div class="tt">${y}</div><div class="meta">${meas}: zatiaľ nie je k dispozícii.</div>`;
+    const p = debtVal(y - 1);   // same measure only
+    const chg = p ? `<div class="yoy">Oproti ${y - 1}: <b>${d.v >= p.v ? "+" : "−"}${mld(Math.abs(d.v - p.v))}</b>, podiel ${d.s >= p.s ? "+" : "−"}${eur(Math.abs(d.s - p.s))} zo stovky</div>` : "";
+    return `<div class="tt">${y} · ${meas}${d.prov ? " (predbežné)" : ""}${d.est ? ' <span class="prov">odhad</span>' : ""}</div>`
+      + `<div class="big">${d.est ? "≈ " : ""}${mld(d.v)}</div><div class="meta">${d.est ? "≈ " : ""}${eur(d.s)} zo stovky štátnej kasy</div>`
+      + chg + `<div class="note">${esc(DEBT_NOTE)}</div>`;
+  }
+  dc.addEventListener("pointermove", ev => {
+    if (ev.pointerType !== "mouse") return;
+    const c = ev.target.closest(".col"); if (!c) return hideTip();
+    openedBy = "mouse"; showTip(debtTip(+c.dataset.year), ev.clientX, ev.clientY);
+  });
+  dc.addEventListener("pointerleave", ev => { if (ev.pointerType === "mouse") hideTip(); });
+  dc.addEventListener("click", ev => {
+    const c = ev.target.closest(".col"); if (!c) return;
+    const y = +c.dataset.year;
+    if (available(y, state.measure)) setState(y);
+    if (lastPointer.type !== "mouse") { openedBy = "tap"; showTip(debtTip(y), ev.clientX, ev.clientY, true); }
+  });
+  dc.addEventListener("focusin", ev => {
+    const c = ev.target.closest(".col"); if (!c || fromPointer()) return;
+    const b = c.getBoundingClientRect(); openedBy = "key";
+    showTip(debtTip(+c.dataset.year), b.right, b.top + 40, true);
+  });
+  dc.addEventListener("focusout", () => { if (openedBy === "key") hideTip(); });
+  dc.addEventListener("keydown", ev => {
+    const c = ev.target.closest(".col"); if (!c) return;
+    if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); setState(+c.dataset.year); dc.querySelector(`.col[data-year="${c.dataset.year}"]`).focus(); }
+  });
+
   // ---- render all ----
-  function render() { drawControls(); drawText(); drawTreemap(); drawTime(); }
+  function render() { drawControls(); drawText(); drawTreemap(); drawTime(); drawDebt(); }
   let rz = 0;
-  window.addEventListener("resize", () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { drawTreemap(); drawTime(); }); });
+  window.addEventListener("resize", () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { drawTreemap(); drawTime(); drawDebt(); }); });
 
   // ---- PNG export (copy / download) with title, scope caveat and source baked in ----
   const FONT = "-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
@@ -544,6 +639,10 @@
     };
     const prov = YEARS.some(y => (entry(y) || {}).provisional);
     const estY = YEARS.filter(y => isEst(y, state.measure));
+    if (which === "dc") return {
+      title: `Obsluha štátneho dlhu, ${YEARS[0]} – ${YEARS[YEARS.length - 1]}`,
+      sub: `${meas}${prov ? " (posledný uzavretý rok predbežne)" : ""} · hore mld. €, dole € zo stovky štátnej kasy${estY.length ? ` · ${estY.join(", ")}: odhad (šrafované)` : ""}`,
+      legend: false, extra: [DEBT_NOTE] };
     return { title: `Stovka zo štátnej kasy v čase, ${YEARS[0]} – ${YEARS[YEARS.length - 1]}`,
       sub: `${meas}${prov ? " (posledný uzavretý rok predbežne)" : ""}${estY.length ? ` · ${estY.join(", ")}: rozdelenie je odhad (šrafované)` : ""} · rovnaká výška stĺpcov = podiely, nie rast výdavkov`, legend: true,
       extra: estY.length ? [`${estY.join(", ")}: ${EST_LINE}`] : [] };
@@ -606,10 +705,11 @@
   document.addEventListener("click", ev => {
     const btn = ev.target.closest(".ct"); if (!btn) return;
     const which = btn.closest(".chart-tools").dataset.chart;
-    const svg = which === "tm" ? tmSvg : $("tcsvg");
+    const svg = which === "tm" ? tmSvg : $(which + "svg");
     if (!svg) return;
     const meta = exportMeta(which);
-    const name = which === "tm" ? `stovka-${state.year}-${state.measure}` : `stovka-v-case-${state.measure}`;
+    const name = { tm: `stovka-${state.year}-${state.measure}`, tc: `stovka-v-case-${state.measure}`,
+                   dc: `obsluha-dlhu-${state.measure}` }[which];
     const save = p => p.then(b => { if (b) { dl(b, name); flash(btn, "Stiahnuté ✓"); } else flash(btn, "Chyba"); });
     if (btn.dataset.act === "download") return save(toBlob(svg, meta));
     if (navigator.clipboard && window.ClipboardItem) {   // Safari needs write() inside the gesture

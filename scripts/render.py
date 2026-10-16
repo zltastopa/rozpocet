@@ -62,14 +62,14 @@ def main() -> None:
         bt = x.get("backtest")
         levels = "; ".join(f"{lv['popis']}: {sk_eur(lv['suma'])}" for lv in x["levels"] if lv["suma"])
         next_year_note += (
-            f"<p><b>Rok {y} je čiastočne odhad.</b> Celkové výdavky a príjmy štátu sú zo zákona o štátnom rozpočte na rok {y} "
-            f"(<a href=\"{esc(x['zdroj_bilancia'])}\">bilancia</a>) a výdavky Sociálnej poisťovne z jej schváleného rozpočtu "
-            f"(<a href=\"{esc(x['zdroj_sp'])}\">rozpočet Sociálnej poisťovne</a>, po riadkoch, bez finančných operácií); "
-            f"transfer zo štátu do nej je v oboch dokumentoch rovnaký. Rozdelenie výdavkov štátu podľa funkčnej klasifikácie "
-            f"ministerstvo zatiaľ nezverejnilo, preto ho odhadujeme. Sumy všetkých programov a vybraných podprogramov sú z prílohy č. 4 "
-            f"(<a href=\"{esc(x['zdroj_programy'])}\">výdavky na programy vlády</a>, vládny návrh, ktorý NR SR schválila "
-            f"s rovnakými celkovými výdavkami), skupiny výdavkov Všeobecnej pokladničnej správy vrátane odvodu do EÚ "
-            f"z hlavnej knihy návrhu rozpočtu (tabuľky 116 a 118); každý program sme rozdelili do dlaždíc podľa toho, ako sa ten istý "
+            f"<p><b>Rok {y} je čiastočne odhad.</b> Celkové výdavky a príjmy štátu sú zo schváleného zákona o štátnom rozpočte "
+            f"na rok {y} (<a href=\"{esc(x['zdroj_bilancia'])}\">príloha č. 1</a>) a výdavky Sociálnej poisťovne z jej "
+            f"schváleného rozpočtu ({esc(x['sp_schvalenie'])}; <a href=\"{esc(x['zdroj_sp'])}\">rozpočet po riadkoch</a>, "
+            f"bez finančných operácií); transfer zo štátu do nej je v oboch dokumentoch rovnaký. Rozdelenie výdavkov štátu "
+            f"podľa funkčnej klasifikácie ministerstvo zatiaľ nezverejnilo, preto ho odhadujeme. Sumy všetkých programov a "
+            f"vybraných podprogramov sú z prílohy č. 4 schváleného zákona (<a href=\"{esc(x['zdroj_programy'])}\">výdavky "
+            f"na programy vlády</a>), skupiny výdavkov Všeobecnej pokladničnej správy vrátane odvodu do EÚ "
+            f"z hlavnej knihy rozpočtu (tabuľky 116 a 118); každý program sme rozdelili do dlaždíc podľa toho, ako sa ten istý "
             f"program delil v schválenom rozpočte na rok {x['zaklad'][0]} (údaje po riadkoch z rozpocet.sk). "
             f"Ak MF v zozname programov uvádza názov, program sa prevezme len pri zhode názvu; pri "
             f"{sk_eur(x['bez_overenia_nazvu'])} (programy, pri ktorých zoznam MF uvádza len podprogramy, napr. "

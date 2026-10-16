@@ -18,25 +18,28 @@ Usage: python scripts/parse_navrh.py 2027      # state budget program annex
 from __future__ import annotations
 
 import csv
+import io
 import re
 import subprocess
 import sys
 import tempfile
 import urllib.request
+import zipfile
 from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# 2027: government material UV-27305/2026 "Návrh rozpočtu verejnej správy na roky
-# 2027 až 2029" (approved by the government 5 Oct 2026; NR SR passed the law 14 Oct
-# 2026 with the same expenditure total), https://rokovania.gov.sk/RVL/Material/32287/1
+# 2027: annexes of the law as passed by NR SR on 14 Oct 2026 ("Schválené znenie", III. čítanie
+# of parlamentná tlač 1555; identical, line by line, to the government proposal UV-27305/2026).
+# nrsr.sk serves them only inside a zip; "URL#member" picks the PDF by its name prefix.
 # 2026: annexes of the promulgated law 303/2025 Z. z. (slov-lex), used only to
 # backtest the estimate method against the real 2026 COFOG split.
+NRSR_1555 = "http://www.nrsr.sk/web/Dynamic/DownloadSslpZip.aspx?MasterId=11020&section=3_citanie&WFTID="
 SOURCES = {
     2027: {
-        "annex4": "https://rokovania.gov.sk/download.dat?id=63E54DA3C9454411B2AA8E6F1F080BFC-D92237231DA2898822FE99FEB3F75026",
-        "annex1": "https://rokovania.gov.sk/download.dat?id=C9974B510A9C4DDE94229857CCB55396-C9A4CA771E8882B413E0C8AC012A62A8",
+        "annex4": NRSR_1555 + "#Príloha tlac 1555 c. 4",
+        "annex1": NRSR_1555 + "#Príloha tlac 1555 c.1",
     },
     2026: {
         "annex4": "https://static.slov-lex.sk/pdf/prilohy/SK/ZZ/2025/303/20260101_5779543-2.pdf",
@@ -50,10 +53,18 @@ LINE = re.compile(r"^(?P<code>[0-9][0-9A-Z]{2,6})\s+(?P<name>.*?)\s{2,}(?P<v>\d{
 
 
 def pdf_text(url: str) -> str:
+    url, _, member = url.partition("#")
+    # nrsr.sk rejects non-browser user agents
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (zltastopa-rozpocet/1.0)"})
+    body = urllib.request.urlopen(req, timeout=180).read()
+    if member:
+        with zipfile.ZipFile(io.BytesIO(body)) as z:
+            # zip names are CP852 encoded but flagged as CP437
+            names = {i.filename.encode("cp437").decode("cp852"): i for i in z.infolist()}
+            body = z.read(next(i for n, i in names.items() if n.startswith(member)))
     with tempfile.TemporaryDirectory() as d:
         pdf = Path(d) / "a.pdf"
-        req = urllib.request.Request(url, headers={"User-Agent": "zltastopa-rozpocet/1.0"})
-        pdf.write_bytes(urllib.request.urlopen(req, timeout=180).read())
+        pdf.write_bytes(body)
         return subprocess.run(["pdftotext", "-layout", str(pdf), "-"], check=True,
                               capture_output=True, text=True).stdout
 
@@ -108,9 +119,12 @@ def main() -> None:
 
 # Sociálna poisťovňa budget (government material, approved by an NR SR resolution):
 # Príloha a has a row-level table (druh, IČO 30807484, zdroj, COFOG, EKV) in euros.
-# 2027: UV-27306/2026, https://rokovania.gov.sk/RVL/Material/32285/1
+# 2027: UV-27306/2026, https://rokovania.gov.sk/RVL/Material/32285/1 — approved unchanged by NR SR
+# (parlamentná tlač 1558, hlasovanie č. 228 on 14 Oct 2026; the finance committee's resolution
+# VFR 340 states expenditure of 15 545 698 tis. €, equal to the 'Spolu' parsed here).
 SP_SOURCES = {
-    2027: "https://rokovania.gov.sk/download.dat?id=685E2ECE65D94CB7976B49E636999089-36659E1E379E0A90838E2F810E930542",
+    2027: ("https://rokovania.gov.sk/download.dat?id=685E2ECE65D94CB7976B49E636999089-36659E1E379E0A90838E2F810E930542",
+           "schválený uznesením NR SR 14. 10. 2026, hlasovanie č. 228, parlamentná tlač 1558"),
 }
 SP_ROW = re.compile(r"^\s*3\s+30807484\s+(\S+)\s+(?:NEALOK\s+)?(\d{4})\s+(\d{3,6})\s+(\d{1,3}(?: \d{3})*)\s{2,}")
 
@@ -118,7 +132,7 @@ SP_ROW = re.compile(r"^\s*3\s+30807484\s+(\S+)\s+(?:NEALOK\s+)?(\d{4})\s+(\d{3,6
 def main_sp(year: int) -> None:
     """Write data/navrh_{rok}_sp.csv (expenditure rows) and _sp_suhrn.csv (total, state transfer).
     Rows must sum exactly to the table's 'Spolu'; the state transfer is revenue item 312001."""
-    lines = pdf_text(SP_SOURCES[year]).splitlines()
+    lines = pdf_text(SP_SOURCES[year][0]).splitlines()
     start = next(i for i, ln in enumerate(lines) if re.search(r"^Výdavky\s+\( v eurách", ln))
     rows, spolu = [], None
     for ln in lines[start + 1:]:
@@ -140,8 +154,8 @@ def main_sp(year: int) -> None:
         w.writerows(rows)
     with (ROOT / "data" / f"navrh_{year}_sp_suhrn.csv").open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["rok", "vydavky_spolu", "transfer_zo_sr", "zdroj"])
-        w.writerow([year, spolu, transfer, SP_SOURCES[year]])
+        w.writerow(["rok", "vydavky_spolu", "transfer_zo_sr", "zdroj", "schvalenie"])
+        w.writerow([year, spolu, transfer, *SP_SOURCES[year]])
     print(f"wrote {out.name} ({len(rows)} rows, Spolu {spolu:,} €, transfer zo ŠR {transfer:,} €)")
 
 

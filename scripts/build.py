@@ -384,7 +384,7 @@ def add_estimates(out_years: dict, problems: list[str]) -> list[int]:
         if abs(total - expected) > len(tiles):   # rounding of each tile to whole euros
             problems.append(f"{year} odhad: tiles {total} != law total − transfer + SP {expected:.0f}")
         report.update({"zdroj_programy": meta["zdroj_programy"], "zdroj_bilancia": meta["zdroj_bilancia"],
-                       "zdroj_sp": sp_meta["zdroj"]})
+                       "zdroj_sp": sp_meta["zdroj"], "sp_schvalenie": sp_meta["schvalenie"]})
 
         # backtest on the same boundary: the previous year estimated the same way (its exact
         # transfer and real approved SP data) compared with its real approved split

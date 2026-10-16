@@ -1,0 +1,50 @@
+name: Refresh budget data
+
+# Re-downloads every year from rozpocet.sk into an empty cache (so revisions of
+# older years are picked up too), rebuilds the dataset and commits data/ +
+# index.html only when the underlying numbers (data/kapitola_fnc.csv) changed.
+# build.py refuses to write data/ if any year does not reconcile with the
+# published state-budget total, so a broken download never gets deployed.
+# A push made with the default GITHUB_TOKEN does not trigger other workflows,
+# so the deploy workflow is dispatched explicitly.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 3 * *" # 05:00 UTC on the 3rd of each month
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch, build, render
+        run: |
+          python scripts/fetch.py
+          python scripts/build.py
+          python scripts/render.py
+      - name: Commit and deploy if data changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data index.html
+          if git diff --cached --quiet -- data/kapitola_fnc.csv; then
+            echo "No data changes; skipping commit."
+          else
+            git commit -m "chore: refresh state budget data from rozpocet.sk"
+            git push
+            gh workflow run deploy.yml --ref main
+          fi

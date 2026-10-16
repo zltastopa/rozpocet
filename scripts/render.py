@@ -62,11 +62,14 @@ def main() -> None:
         bt = x.get("backtest")
         levels = "; ".join(f"{lv['popis']}: {sk_eur(lv['suma'])}" for lv in x["levels"] if lv["suma"])
         next_year_note += (
-            f"<p><b>Rok {y} je odhad.</b> Celkové výdavky a príjmy sú zo zákona o štátnom rozpočte na rok {y} "
-            f"(<a href=\"{esc(x['zdroj_bilancia'])}\">bilancia</a>), rozdelenie podľa funkčnej klasifikácie však "
-            f"ministerstvo zatiaľ nezverejnilo. Sumy všetkých programov a vybraných podprogramov sú z prílohy č. 4 "
+            f"<p><b>Rok {y} je čiastočne odhad.</b> Celkové výdavky a príjmy štátu sú zo zákona o štátnom rozpočte na rok {y} "
+            f"(<a href=\"{esc(x['zdroj_bilancia'])}\">bilancia</a>) a výdavky Sociálnej poisťovne z jej schváleného rozpočtu "
+            f"(<a href=\"{esc(x['zdroj_sp'])}\">rozpočet Sociálnej poisťovne</a>, po riadkoch, bez finančných operácií); "
+            f"transfer zo štátu do nej je v oboch dokumentoch rovnaký. Rozdelenie výdavkov štátu podľa funkčnej klasifikácie "
+            f"ministerstvo zatiaľ nezverejnilo, preto ho odhadujeme. Sumy všetkých programov a vybraných podprogramov sú z prílohy č. 4 "
             f"(<a href=\"{esc(x['zdroj_programy'])}\">výdavky na programy vlády</a>, vládny návrh, ktorý NR SR schválila "
-            f"s rovnakými celkovými výdavkami); každý program sme rozdelili do dlaždíc podľa toho, ako sa ten istý "
+            f"s rovnakými celkovými výdavkami), skupiny výdavkov Všeobecnej pokladničnej správy vrátane odvodu do EÚ "
+            f"z hlavnej knihy návrhu rozpočtu (tabuľky 116 a 118); každý program sme rozdelili do dlaždíc podľa toho, ako sa ten istý "
             f"program delil v schválenom rozpočte na rok {x['zaklad'][0]} (údaje po riadkoch z rozpocet.sk). "
             f"Ak MF v zozname programov uvádza názov, program sa prevezme len pri zhode názvu; pri "
             f"{sk_eur(x['bez_overenia_nazvu'])} (programy, pri ktorých zoznam MF uvádza len podprogramy, napr. "
@@ -78,11 +81,10 @@ def main() -> None:
             + "Aj rozdelenie dlaždíc medzi kapitoly je odhadnuté. Keď ministerstvo zverejní skutočné rozdelenie, "
             "odhad sa pri najbližšej mesačnej obnove dát automaticky nahradí.</p>")
     next_year = int(years[-1]) + 1
-    if str(next_year) not in DATA["years"]:
-        next_year_note += (f"<p><b>Rok {next_year}:</b> zatiaľ chýba. Štátny rozpočet na rok {next_year} je schválený, "
-                           f"ale rozpočet Sociálnej poisťovne na rok {next_year} a rozdelenie výdavkov štátu podľa oblastí "
-                           "ešte nie sú na rozpocet.sk. Bez nich by stovka nebola celá, preto rok doplníme, až keď budú "
-                           "k dispozícii (pri mesačnej obnove dát).</p>")
+    if str(next_year) not in DATA["years"] and not est_years:
+        next_year_note += (f"<p><b>Rok {next_year}:</b> zatiaľ chýba. Doplní sa pri mesačnej obnove dát, keď budú "
+                           f"k dispozícii rozpočet štátu aj Sociálnej poisťovne na rok {next_year} (bez oboch by stovka "
+                           "nebola celá).</p>")
     payload = json.dumps({**DATA, "footnoted": FOOTNOTED, "site": SITE}, ensure_ascii=False,
                          separators=(",", ":")).replace("</", "<\\/")
 

@@ -104,12 +104,19 @@ financií SR (licencia CC0):
 - **Zoznam kapitol:** zoznam kapitol pre rok niekedy vynechá kapitolu s
   výdavkami (kapitola 55 v roku 2011, 469 897 €), preto sa každý rok pýtame na
   všetky kódy kapitol zo všetkých rokov.
-- **Rok 2027 zatiaľ chýba.** Štátny rozpočet je schválený, ale rozpočet
-  Sociálnej poisťovne na rok 2027 a rozdelenie výdavkov štátu podľa oblastí ešte
-  nie sú na rozpocet.sk. Odhad z programov (`scripts/estimate.py`, príloha č. 4
-  v `data/navrh_2027_programy.csv`, spätný test na 2026: chyba dlaždice v
-  priemere 0,44 € zo stovky) je pripravený, ale bez rozpočtu Sociálnej poisťovne
-  by miešal dve rôzne stovky, preto sa nezobrazuje. Doplní sa, keď budú údaje.
+- **Rok 2027 je čiastočne odhad.** Presné sú: celkové výdavky a príjmy štátu
+  (príloha č. 1 zákona), výdavky Sociálnej poisťovne (jej schválený rozpočet po
+  riadkoch, `data/navrh_2027_sp.csv`, bez finančných operácií) a transfer zo štátu
+  do nej (2 000 000 000 €, rovnako v oboch dokumentoch). Odhadnuté je rozdelenie
+  výdavkov štátu do oblastí (`scripts/estimate.py`): sumy programov z prílohy č. 4
+  (`data/navrh_2027_programy.csv`) a skupiny Všeobecnej pokladničnej správy
+  vrátane odvodu do EÚ z hlavnej knihy (`data/navrh_vps.csv`) sa rozdelia podľa
+  toho, ako sa ten istý program delil v schválenom rozpočte 2026 (inak 2025, inak
+  podľa celej kapitoly). Spätný test na roku 2026 na tej istej hranici: chyba
+  dlaždice v priemere 0,21 € zo stovky, najviac 1,05 €. Na stránke je rok výrazne
+  označený („odhad“, „≈“, šrafovanie); keď MF zverejní skutočné členenie, odhad
+  sa automaticky nahradí. Odhad 2027: dôchodky ≈ 29,39 €, dávky ≈ 10,80 €,
+  školstvo ≈ 10,65 €.
 
 Rozhodnutia o hraniciach, kategóriách a zobrazení boli prediskutované a
 odsúhlasené v nezávislej revízii (Codex).

@@ -42,12 +42,12 @@
   const isEst = (y, m = "schvaleny") => !!((D.years[y] || {})[m] || {}).estimate;
   const state = { year: YEARS.filter(y => !isEst(y)).pop(), measure: "schvaleny" };
   function available(y, m) { return !!(D.years[y] && D.years[y][m]); }
-  const EST_LINE = "Celkové príjmy a výdavky sú zo schváleného rozpočtu; rozdelenie do oblastí je odhad.";
+  const EST_LINE = "Celkové sumy aj Sociálna poisťovňa sú zo schválených rozpočtov; rozdelenie výdavkov štátu do oblastí je odhad.";
   function estText(y) {
     const x = D.years[y].schvaleny.estimate, bt = x.backtest;
-    return `Rozpočet na rok ${y}: celkové výdavky a príjmy sú zo zákona, ministerstvo však jeho rozdelenie podľa oblastí `
-      + `ešte nezverejnilo. Dlaždice sú preto odhad: sumu každého programu z prílohy zákona sme rozdelili tak, ako sa ten istý `
-      + `program delil v rozpočte na rok ${x.zaklad[0]} (prípadne ${x.zaklad[1]}).`
+    return `Rok ${y}: celkové výdavky a príjmy štátu sú zo zákona a Sociálna poisťovňa z jej schváleného rozpočtu, `
+      + `rozdelenie výdavkov štátu podľa oblastí však ministerstvo ešte nezverejnilo. Tú časť sme odhadli: sumu každého programu `
+      + `z prílohy zákona sme rozdelili tak, ako sa ten istý program delil v rozpočte na rok ${x.zaklad[0]} (prípadne ${x.zaklad[1]}).`
       + (bt ? ` Keď sme rovnakým postupom odhadli rok ${bt.rok}, dlaždice sa od skutočnosti líšili v priemere o ${eur(bt.priemerna_chyba)} `
         + `zo stovky, najviac o ${eur(bt.max_chyba)} pri dlaždici ${TILE[bt.max_dlazdica].short}. Je to chyba v minulosti, nie záruka presnosti odhadu.` : "");
   }

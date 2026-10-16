@@ -133,8 +133,10 @@ assert set(SPECIAL) == set(EKV_CELLS), "SPECIAL and fetch.EKV_CELLS must list th
 ALLOWED_641003 = {("48", "1020"), ("48", "1050"), ("21", "0760"), ("04", "0760")}
 # Tiny one-off 641003 amounts whose recipient (SP or a health insurer) the data does not say; kept
 # as state expenditure. Even if all went to SP, the double count is at most 0,25 mil. € a year.
-KNOWN_SMALL_641003 = {(2005, "22", "0210"), (2006, "22", "0210"), (2006, "20", "0912"),
-                      (2007, "22", "0412"), (2019, "27", "0421")}
+KNOWN_SMALL_641003 = {   # (year, kapitola, COFOG) -> largest verified amount in € (either measure)
+    (2005, "22", "0210"): 33_194, (2006, "22", "0210"): 33_194, (2006, "20", "0912"): 166,
+    (2007, "22", "0412"): 244_607, (2019, "27", "0421"): 1_371,
+}
 
 # Sociálna poisťovňa is classified by economic item (EKV), the one classification it publishes
 # for every year and measure (its COFOG split is missing in the approved budgets 2006–2008).
@@ -358,13 +360,26 @@ def add_estimates(out_years: dict, problems: list[str]) -> list[int]:
 
 
 def check_641003(year: int, problems: list[str]) -> None:
-    """Fail on any EKV 641003 transfer of a kapitola outside ALLOWED_641003 (any measure)."""
-    for path in (CACHE / str(year)).glob("t641003-*.json"):
-        k = path.stem.removeprefix("t641003-")
-        for x in load(path)["data"].get("payload") or []:
-            if len(x["kod"]) == 4 and (k, x["kod"]) not in ALLOWED_641003 and (year, k, x["kod"]) not in KNOWN_SMALL_641003 and any(
-                    abs(x["hodnoty"].get(m.upper()) or 0) > TOLERANCE_EUR for m in MEASURES):
-                problems.append(f"{year}: unexpected EKV 641003 transfer in kapitola {k} x COFOG {x['kod']}")
+    """Fail closed on EKV 641003 transfers: every kapitola with data that year must have a
+    scan, and any 641003 outside ALLOWED_641003 (or above a known small amount) fails."""
+    for fpath in (CACHE / str(year)).glob("fnc-*.json"):
+        k = fpath.stem.removeprefix("fnc-")
+        if not (load(fpath)["data"].get("payload") or []):
+            continue  # kapitola did not exist that year
+        spath = CACHE / str(year) / f"t641003-{k}.json"
+        if not spath.exists():
+            problems.append(f"{year}: missing 641003 scan for kapitola {k}")
+            continue
+        data = load(spath)["data"]
+        if not isinstance(data, dict) or "success" not in data or not isinstance(data.get("payload", []), list):
+            problems.append(f"{year}: malformed 641003 scan for kapitola {k}")
+            continue
+        for x in data.get("payload") or []:
+            if len(x["kod"]) != 4 or (k, x["kod"]) in ALLOWED_641003:
+                continue
+            amount = max(abs(x["hodnoty"].get(m.upper()) or 0) for m in MEASURES)
+            if amount > KNOWN_SMALL_641003.get((year, k, x["kod"]), 0) + TOLERANCE_EUR:
+                problems.append(f"{year}: unexpected EKV 641003 transfer in kapitola {k} x COFOG {x['kod']} ({amount:.0f} €)")
 
 
 def own_amounts(payload: list[dict], field: str) -> list[tuple[str, str, float]]:

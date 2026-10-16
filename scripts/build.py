@@ -182,6 +182,16 @@ EKV_NAMES = {
 # Bump this when the next one is approved; later closed years are marked provisional.
 FINAL_ACCOUNT_THROUGH = 2025
 
+# Tile x measure pairs whose year-over-year change is not a like-for-like comparison:
+# the reason is shown instead of the change. In approved budgets the VPS tile is
+# mostly unallocated reserves whose size is a budgeting choice (1,90 € in 2019 vs
+# 31,47 € zo stovky in 2020), not spending.
+NO_YOY = {
+    "vps": {"schvaleny": "Medziročnú zmenu pri tejto dlaždici v schválenom rozpočte neuvádzame: "
+                         "jej veľkosť určujú najmä nerozpísané rezervy, nie výdavky, a ich objem sa "
+                         "medzi rokmi líši podľa spôsobu zostavenia rozpočtu."},
+}
+
 # Documented events / classification notes shown as annotations.
 EVENTS = {
     2009: "Slovensko prijalo euro. Sumy za roky 2005 až 2008 sú prepočítané konverzným kurzom 30,1260 Sk/€.",
@@ -392,7 +402,8 @@ def main() -> None:
             "retrieved_from": min(retrieved), "retrieved_to": max(retrieved),
         },
         "groups": GROUPS,
-        "tiles": [{"id": t[0], "group": t[1], "name": t[2], "short": t[3] or t[2], "note": t[4]} for t in TILES],
+        "tiles": [{"id": t[0], "group": t[1], "name": t[2], "short": t[3] or t[2], "note": t[4],
+                   "no_yoy": NO_YOY.get(t[0], {})} for t in TILES],
         "events": events,
         "final_account_through": FINAL_ACCOUNT_THROUGH,
         "residuals": residuals,

@@ -286,13 +286,15 @@
     showTip(tileTip(g.dataset.id, null), b.left + Math.min(b.width, 120) - 16, b.top + 10, true);
   });
   tm.addEventListener("focusout", () => { if (openedBy === "key") hideTip(); });
+  // ↑/↓ scroll an open tooltip while focus is on what opened it (a tile, a
+  // "Menšie dlaždice" button or a time-chart column); ←/→ move between tiles
+  document.addEventListener("keydown", ev => {
+    if ((ev.key !== "ArrowDown" && ev.key !== "ArrowUp") || tip.hidden) return;
+    if (!document.activeElement || !document.activeElement.closest("#tm, #small, #tc")) return;
+    ev.preventDefault();
+    tip.scrollTop += ev.key === "ArrowDown" ? 60 : -60;
+  });
   tm.addEventListener("keydown", ev => {
-    // ↑/↓ scroll a long tooltip of the focused tile; ←/→ move between tiles
-    if ((ev.key === "ArrowDown" || ev.key === "ArrowUp") && !tip.hidden) {
-      ev.preventDefault();
-      tip.scrollTop += ev.key === "ArrowDown" ? 60 : -60;
-      return;
-    }
     if (ev.key !== "ArrowRight" && ev.key !== "ArrowLeft") return;
     const all = [...tm.querySelectorAll(".tile")], i = all.indexOf(document.activeElement);
     if (i < 0) return;

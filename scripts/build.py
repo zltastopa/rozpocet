@@ -289,7 +289,9 @@ def add_estimates(out_years: dict, problems: list[str]) -> list[int]:
                 names[p.stem.removeprefix("fnc-")] = payload[0]["nazovOrganizacie"].strip()
         return names
 
-    def run(year: int) -> tuple[dict, dict]:
+    def run(year: int, transfer: float, sp_source) -> tuple[dict, dict, float]:
+        """Estimated state split (with the exact transfer to SP carved out of VPS program 0HW
+        and consolidated away) + Sociálna poisťovňa from `sp_source`. Returns tiles, report, SP total."""
         names = kap_names(year - 1)
 
         def classify(kap: str, fnc: str, eko: str) -> tuple[str, str]:
@@ -302,13 +304,60 @@ def add_estimates(out_years: dict, problems: list[str]) -> list[int]:
             tile = rnd_or_prefix(fnc)
             return tile, child_key(tile, fnc, names.get(kap, kap))
 
-        cells, report = estimate(year, classify, names)
+        # exact VPS groups from MF's main book (data/navrh_vps.csv); the transfer to SP uses
+        # the exact amount passed in, which must agree with the main book to within its rounding
+        known = []
+        with (DATA / "navrh_vps.csv").open(encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                if int(r["rok"]) != year:
+                    continue
+                amount = int(r["suma"])
+                if r["kod"] == "0HW03":
+                    if abs(amount - transfer) > 1000:   # main book is in thousands of euros
+                        problems.append(f"{year}: main-book transfer to SP {amount} != {transfer:.0f}")
+                    amount = round(transfer)
+                known.append({"kap": "48", "code": r["kod"], "name": r["nazov"], "amount": amount,
+                              "tile": r["dlazdica"] or None, "child": r["polozka"] or None})
+        if not any(k["code"] == "0HW03" for k in known):
+            problems.append(f"{year}: no transfer to Sociálna poisťovňa in data/navrh_vps.csv")
+        cells, report = estimate(year, classify, names, known)
         acc: dict = defaultdict(lambda: {"v": 0.0, "children": defaultdict(float), "kap": defaultdict(float)})
-        for (tile, child, kap), v in cells.items():
+
+        def add(_m: str, tile: str, child: str, kap: str, v: float) -> None:
             acc[tile]["v"] += v
             acc[tile]["children"][child] += v
             acc[tile]["kap"][kap] += v
-        return serialize_tiles(acc, f"{year} odhad", problems), report
+
+        consolidated = 0.0
+        for (tile, child, kap), v in cells.items():
+            if tile == CONSOLIDATED:
+                consolidated += v
+            else:
+                add("schvaleny", tile, child, kap, v)
+        # the carved-out transfer may also attract CONSOLIDATED shares from other pieces; it must
+        # equal the documented transfer, or the state and SP sides would not net out
+        if abs(consolidated - transfer) > TOLERANCE_EUR:
+            problems.append(f"{year} odhad: consolidated {consolidated:.0f} != transfer to SP {transfer:.0f}")
+        sp_total = sp_source(add)
+        return serialize_tiles(acc, f"{year} odhad", problems), report, sp_total
+
+    def sp_from_annex(year: int):
+        """Sociálna poisťovňa from its parsed budget (data/navrh_{rok}_sp.csv); financial
+        operations (class 8) excluded, as rozpocet.sk does."""
+        def source(add) -> float:
+            total = 0.0
+            with (DATA / f"navrh_{year}_sp.csv").open(encoding="utf-8") as f:
+                for r in csv.DictReader(f):
+                    v = float(r["suma"])
+                    if r["ekv"].startswith("8") or not v:
+                        continue
+                    if r["ekv"] == SP_INTERNAL_EKV:
+                        problems.append(f"{year}: unexpected SP-internal transfer in the SP budget")
+                    tile, child = SP_ITEMS.get(r["ekv"], SP_OTHER)
+                    add("schvaleny", tile, child, SP_NAME, v)
+                    total += v
+            return total
+        return source
 
     def shares(tiles: dict, total: float) -> dict:
         return {tid: 100 * t["v"] / total for tid, t in tiles.items()}
@@ -318,24 +367,31 @@ def add_estimates(out_years: dict, problems: list[str]) -> list[int]:
         year = int(path.stem.split("_")[1])
         if str(year) in out_years:
             continue  # published data exists: no estimate (older annexes only serve backtests)
-        sp = CACHE / "sp" / str(year) / "ekv.json"
-        if not sp.exists() or not (load(sp)["data"].get("payload") or []):
+        sp_meta_path = DATA / f"navrh_{year}_sp_suhrn.csv"
+        if not sp_meta_path.exists():
             # the stovka includes Sociálna poisťovňa; without its budget for the year an
             # estimate would mix boundaries, so the year is left out until it is available
             print(f"note: {year} not estimated – Sociálna poisťovňa budget not available", file=sys.stderr)
             continue
         with (DATA / f"navrh_{year}_suhrn.csv").open(encoding="utf-8") as f:
             meta = next(csv.DictReader(f))
-        tiles, report = run(year)
+        with sp_meta_path.open(encoding="utf-8") as f:
+            sp_meta = next(csv.DictReader(f))
+        transfer = float(sp_meta["transfer_zo_sr"])
+        tiles, report, sp_total = run(year, transfer, sp_from_annex(year))
         total = sum(t["v"] for t in tiles.values())
-        if abs(total - int(meta["vydavky"])) > len(tiles):   # rounding of each tile to whole euros
-            problems.append(f"{year} odhad: tiles {total} != law total {meta['vydavky']}")
-        report.update({"zdroj_programy": meta["zdroj_programy"], "zdroj_bilancia": meta["zdroj_bilancia"]})
+        expected = int(meta["vydavky"]) - transfer + sp_total
+        if abs(total - expected) > len(tiles):   # rounding of each tile to whole euros
+            problems.append(f"{year} odhad: tiles {total} != law total − transfer + SP {expected:.0f}")
+        report.update({"zdroj_programy": meta["zdroj_programy"], "zdroj_bilancia": meta["zdroj_bilancia"],
+                       "zdroj_sp": sp_meta["zdroj"]})
 
-        # backtest: estimate the previous year the same way and compare with its real split
+        # backtest on the same boundary: the previous year estimated the same way (its exact
+        # transfer and real approved SP data) compared with its real approved split
         prev = out_years.get(str(year - 1), {}).get("schvaleny")
         if prev and (DATA / f"navrh_{year - 1}_programy.csv").exists():
-            bt_tiles, _ = run(year - 1)
+            bt_tiles, _, _ = run(year - 1, prev["transfer"],
+                                 lambda add: sp_part(year - 1, "schvaleny", add, [], problems)[0])
             bt_total = sum(t["v"] for t in bt_tiles.values())
             est, real = shares(bt_tiles, bt_total), shares(prev["tiles"], prev["total"])
             err = {tid: abs(est.get(tid, 0) - real.get(tid, 0)) for tid in set(est) | set(real)}
@@ -352,8 +408,10 @@ def add_estimates(out_years: dict, problems: list[str]) -> list[int]:
                 "max_chyba_polozky": round(max(child_err), 2),
                 "priemerna_chyba_polozky": round(sum(child_err) / len(child_err), 2),
             }
-        out_years[str(year)] = {"schvaleny": {"total": int(meta["vydavky"]), "revenue": int(meta["prijmy"]),
-                                              "tiles": tiles, "estimate": report}}
+        out_years[str(year)] = {"schvaleny": {
+            "total": round(total), "revenue": int(meta["prijmy"]), "tiles": tiles, "estimate": report,
+            "state_total": int(meta["vydavky"]), "sp_total": round(sp_total), "transfer": round(transfer),
+            "sp_internal": 0}}
         done.append(year)
     return done
 

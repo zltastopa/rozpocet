@@ -1,0 +1,9 @@
+rok,kod,nazov,suma,dlazdica,polozka,zdroj
+2027,0HW02,Výdavky vo vzťahu k EÚ,1640977000,,,"Návrh rozpočtu verejnej správy na roky 2027 až 2029, Tabuľka 116 (2027 N, v tis. eur), https://rokovania.gov.sk/download.dat?id=36EADC23CEA24CDA84D09F628195E68B-4B1AF7011E0E244ED04826078A236D24"
+2027,0HW02~649005,Odvody SR do všeobecného rozpočtu EÚ,1374210000,eu,Odvod do rozpočtu EÚ,"tamže, Tabuľka 118 (2027 N, v tis. eur)"
+2027,0HW03,Transfer Sociálnej poisťovni,2000000000,konsolidovane,Transfer Sociálnej poisťovni,"tamže, Tabuľka 116 (2027 N); rovnako rozpočet Sociálnej poisťovne 2027, príjem 312001"
+2027,0HW04,Správa ostatných výdavkov,2478720000,,,"tamže, Tabuľka 116 (2027 N, v tis. eur)"
+2026,0HW02,Výdavky vo vzťahu k EÚ,1383740000,,,"tamže, Tabuľka 116 (2026 R, v tis. eur)"
+2026,0HW02~649005,Odvody SR do všeobecného rozpočtu EÚ,1284400000,eu,Odvod do rozpočtu EÚ,"tamže, Tabuľka 118 (2026 R, v tis. eur)"
+2026,0HW03,Transfer Sociálnej poisťovni,2344174000,konsolidovane,Transfer Sociálnej poisťovni,"tamže, Tabuľka 116 (2026 R, v tis. eur)"
+2026,0HW04,Správa ostatných výdavkov,942873000,,,"tamže, Tabuľka 116 (2026 R, v tis. eur)"

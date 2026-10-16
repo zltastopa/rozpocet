@@ -31,6 +31,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "cache" / "detail"
 
 LEVELS = [
+    ("presna_suma", "presná suma z hlavnej knihy rozpočtu alebo rozpočtu Sociálnej poisťovne"),
     ("program_r1", "rovnaký program v tej istej kapitole o rok skôr"),
     ("program_r2", "rovnaký program v tej istej kapitole o dva roky skôr"),
     ("program_ina_kapitola", "rovnaký program v inej kapitole o rok skôr"),
@@ -51,8 +52,8 @@ def same_name(a: str | None, b: str | None) -> bool | None:
     return a == b or SequenceMatcher(None, a, b).ratio() >= 0.75
 
 
-def load_rows(year: int, classify) -> list[tuple[str, str, str, str, float]]:
-    """(kapitola, program, tile, child, €) for approved state-budget expenditure rows."""
+def load_rows(year: int, classify) -> list[tuple[str, str, str, str, str, float]]:
+    """(kapitola, program, EKV, tile, child, €) for approved state-budget expenditure rows."""
     out = []
     with (DETAIL / f"schvaleny-{year}.csv").open(encoding="utf-8") as f:
         for r in csv.DictReader(f):
@@ -61,7 +62,7 @@ def load_rows(year: int, classify) -> list[tuple[str, str, str, str, float]]:
             v = float(r["SCHV_ROK"] or 0)
             if v:
                 tile, child = classify(r["ORG"], r["FNC"], r["EKO"])
-                out.append((r["ORG"], r["PRG"], tile, child, v))
+                out.append((r["ORG"], r["PRG"], r["EKO"], tile, child, v))
     return out
 
 
@@ -77,7 +78,9 @@ def detail_meta(year: int) -> dict:
 def pieces(annex: list[dict]) -> list[dict]:
     """Disjoint pieces: every listed node (program or subprogram) minus its directly
     nested listed subprograms. Subprograms can nest (0HW01 > 0HW0101), so a node's
-    direct children are the listed codes under it with no other listed code between."""
+    direct children are the listed codes under it with no other listed code between.
+    A code "PRG~EKV" is one economic item inside program PRG (e.g. 0HW02~649005, the
+    odvod do rozpočtu EÚ): its parent's remainder then also excludes rows of that item."""
     out = []
     by_kap = defaultdict(list)
     for r in annex:
@@ -99,51 +102,63 @@ def pieces(annex: list[dict]) -> list[dict]:
                 if rest < 0:
                     raise ValueError(f"kapitola {kap} {code}: listed subprograms exceed it")
                 out.append({"kap": kap, "code": code, "name": n["nazov"], "amount": rest,
-                            "exclude": [s["program"] for s in direct]})
+                            "exclude": [s["program"] for s in direct if "~" not in s["program"]],
+                            "exclude_eko": {s["program"].split("~")[1] for s in direct if "~" in s["program"]}})
     return [p for p in out if p["amount"]]
 
 
-def estimate(year: int, classify, kap_names: dict[str, str]) -> tuple[dict, dict]:
-    """Return ({(tile, child, kap): €}, report) for `year` from its annex."""
+def estimate(year: int, classify, kap_names: dict[str, str], known: list[dict] | None = None) -> tuple[dict, dict]:
+    """Return ({(tile, child, kap): €}, report) for `year` from its annex.
+    `known` lists exact amounts the annex does not itemise (from MF's main book or SP's
+    budget), e.g. VPS groups or the transfer to Sociálna poisťovňa. Each is carved out of
+    its parent program like a listed subprogram; with a "tile" it is assigned there
+    directly, otherwise it is spread like that program's rows a year earlier."""
     annex = list(csv.DictReader((ROOT / "data" / f"navrh_{year}_programy.csv").open(encoding="utf-8")))
+    known = known or []
+    annex += [{"kapitola": k["kap"], "nazov_kapitoly": "", "program": k["code"], "nazov": k["name"],
+               "podprogram": "1", "suma": str(k["amount"])} for k in known]
+    fixed = {(k["kap"], k["code"]): (k["tile"], k["child"]) for k in known if k.get("tile")}
     r1, r2 = load_rows(year - 1, classify), load_rows(year - 2, classify)
     n1, n2 = load_names(year - 1), load_names(year - 2)
 
     def shares(rows, pred) -> dict:
         acc = defaultdict(float)
-        for kap, prg, tile, child, v in rows:
-            if pred(kap, prg):
+        for kap, prg, eko, tile, child, v in rows:
+            if pred(kap, prg, eko):
                 acc[(tile, child)] += v
         tot = sum(acc.values())
         return {k: v / tot for k, v in acc.items()} if tot > 0 else {}
 
-    def matches(code, exclude):
-        return lambda prg: prg.startswith(code) and not any(prg.startswith(x) for x in exclude)
+    def matches(code, exclude, exclude_eko):
+        return lambda prg, eko: (prg.startswith(code) and not any(prg.startswith(x) for x in exclude)
+                                 and eko not in exclude_eko)
 
     out = defaultdict(float)
     level_amount = defaultdict(float)
     unverified = 0.0   # amount whose program code has no name in MF's program list
     for p in pieces(annex):
-        m = matches(p["code"], p["exclude"])
-        chosen = None
-        for level, rows, names, same_kap in (("program_r1", r1, n1, True), ("program_r2", r2, n2, True),
-                                             ("program_ina_kapitola", r1, n1, False)):
+        m = matches(p["code"], p["exclude"], p["exclude_eko"])
+        chosen = (("presna_suma", {fixed[(p["kap"], p["code"])]: 1.0}, True)
+                  if (p["kap"], p["code"]) in fixed else None)
+        for level, rows, names, same_kap in (() if chosen else
+                                             (("program_r1", r1, n1, True), ("program_r2", r2, n2, True),
+                                              ("program_ina_kapitola", r1, n1, False))):
             if same_kap:
                 # cross-ministry programs are named only in the gestor's kapitola
-                known = names.get((p["kap"], p["code"])) or next(
+                known_name = names.get((p["kap"], p["code"])) or next(
                     (nm for (k, c), nm in names.items() if c == p["code"]), None)
-                ident = same_name(p["name"], known)
-                sh = shares(rows, lambda k, prg: k == p["kap"] and m(prg)) if ident is not False else {}
+                ident = same_name(p["name"], known_name)
+                sh = shares(rows, lambda k, prg, eko: k == p["kap"] and m(prg, eko)) if ident is not False else {}
             else:
                 cands = {k for (k, c), nm in names.items() if c == p["code"] and same_name(p["name"], nm)}
                 ident = bool(cands) or None
-                sh = shares(rows, lambda k, prg: k in cands and m(prg)) if cands else {}
+                sh = shares(rows, lambda k, prg, eko: k in cands and m(prg, eko)) if cands else {}
             if sh:
                 chosen = (level, sh, ident)
                 break
         if chosen is None:
-            sh = shares(r1, lambda k, prg: k == p["kap"])
-            chosen = ("kapitola", sh, True) if sh else ("celok", shares(r1, lambda k, prg: True), True)
+            sh = shares(r1, lambda k, prg, eko: k == p["kap"])
+            chosen = ("kapitola", sh, True) if sh else ("celok", shares(r1, lambda k, prg, eko: True), True)
         level, sh, ident = chosen
         level_amount[level] += p["amount"]
         if ident is None:

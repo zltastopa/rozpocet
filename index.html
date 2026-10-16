@@ -841,7 +841,15 @@ footer .parent-link { display:inline-block; margin-top:6px; font-weight:600; }
     const chg = p ? `<div class="yoy">Oproti ${y - 1}: <b>${d.v >= p.v ? "+" : "−"}${mld(Math.abs(d.v - p.v))}</b>, podiel ${d.s >= p.s ? "+" : "−"}${eur(Math.abs(d.s - p.s))} zo stovky</div>` : "";
     return `<div class="tt">${y} · ${meas}${d.prov ? " (predbežné)" : ""}${d.est ? ' <span class="prov">odhad</span>' : ""}</div>`
       + `<div class="big">${d.est ? "≈ " : ""}${mld(d.v)}</div><div class="meta">${d.est ? "≈ " : ""}${eur(d.s)} zo stovky štátnej kasy</div>`
-      + chg + `<div class="note">${esc(DEBT_NOTE)}</div>`;
+      + chg + lowNote(y) + `<div class="note">${esc(DEBT_NOTE)}</div>`;
+  }
+  // transfer years (since 2012) where the actual transfer fell far short of the approved one
+  // (2020: 0,80 of 1,16; 2021: 0,66 of 1,11 mld. €)
+  function lowNote(y) {
+    const a = debtVal(y, "skutocnost"), s = debtVal(y, "schvaleny");
+    if (y < 2012 || !a || !s || a.v >= 0.75 * s.v) return "";
+    return `<div class="note"><b>Nezvyčajne nízky transfer:</b> v roku ${y} štát skutočne poslal na obsluhu dlhu len ${mld(a.v)} `
+      + `zo schválených ${mld(s.v)}. Úroky zaplatené v tom roku sa preto môžu od tejto sumy výrazne líšiť.</div>`;
   }
   dc.addEventListener("pointermove", ev => {
     if (ev.pointerType !== "mouse") return;

@@ -41,11 +41,15 @@ OPEN_API = "https://www.rozpocet.sk/api/vs/"
 FIRST_YEAR = 2005
 UA = "zltastopa-rozpocet/1.0 (+https://github.com/zltastopa/rozpocet)"
 
+# Sociálna poisťovňa in rozpocet.sk (ostatné subjekty verejnej správy). Its expenditure is part
+# of the stovka: in Slovakia pensions are paid by it, not by the state budget.
+SP_ORG = "203"
+
 # (kapitola, COFOG) cells whose economic-classification (EKV) breakdown we need,
 # because build.py splits them by EKV item (e.g. MZ x 1090 = platby za poistencov
 # štátu, VPS x 0113 = odvod do rozpočtu EÚ). Fetched from the true kapitola x FNC x
 # EKV cross-tab that rozpocet.sk itself uses, so splits are the real intersection.
-EKV_CELLS = [("21", "1090"), ("21", "0760"), ("48", "0113"), ("48", "1020"), ("48", "0112")]
+EKV_CELLS = [("21", "1090"), ("21", "0760"), ("48", "0113"), ("48", "1020"), ("48", "1050"), ("48", "0112")]
 
 
 def get_json(url: str, tries: int = 5) -> dict:
@@ -150,11 +154,29 @@ def main() -> None:
             return f"{y} kapitola {k} x {f}: {e}"
         return None
 
+    def cross(path: Path, org: str, y: int, view: str, ekv_filter: str, fnc_filter: str, drh: str = "") -> str | None:
+        url = (f"{WEB_API}rozpocet/polozkyRozpocetuVSOrg/SK/{org}/{y}/VS/false/{view}"
+               f"?EKV={ekv_filter}&FNC={fnc_filter}" + (f"&DRH={drh}" if drh else ""))
+        try:
+            cached(path, url, args.force)
+        except (urllib.error.HTTPError, RuntimeError) as e:
+            return f"{path.relative_to(CACHE)}: {e}"
+        return None
+
     with ThreadPoolExecutor(args.workers) as ex:
         problems = [p for p in ex.map(fnc, jobs) if p]
         have = set(jobs)
         ekv_jobs = [(y, k, f) for y in years for k, f in EKV_CELLS if (y, k) in have]
         problems += [p for p in ex.map(ekv, ekv_jobs) if p]
+        # every kapitola's EKV 641003 transfers ("Sociálnej poisťovni a zdravotným poisťovniam")
+        # by COFOG: build.py checks the only state -> Sociálna poisťovňa flow is VPS x 1020
+        problems += [p for p in ex.map(lambda j: cross(CACHE / str(j[0]) / f"t641003-{j[1]}.json", j[1], j[0],
+                                                        "FNC", "641003", "Spolu", "21"), jobs) if p]
+        # Sociálna poisťovňa (org 203): expenditure by economic item for the whole institution.
+        # (Its COFOG split is missing in the approved budgets 2006–2008, so EKV is the one
+        # classification available consistently for every year and measure.)
+        problems += [p for p in ex.map(lambda y: cross(CACHE / "sp" / str(y) / "ekv.json", SP_ORG, y,
+                                                        "EKV", "SpoluV", "Spolu"), years) if p]
 
     # Row-level approved budgets (kapitola x program x COFOG x EKV) and program names
     # for the two years before every year with a parsed bill annex

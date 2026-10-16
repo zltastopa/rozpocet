@@ -67,6 +67,24 @@ def get_json(url: str, tries: int = 5) -> dict:
     raise RuntimeError(f"failed after {tries} tries: {url}: {last}")
 
 
+def get_text(url: str, tries: int = 5) -> str:
+    """GET a CSV body; MF answers 200 with a plain-text message when a year is missing."""
+    last: Exception | None = None
+    for attempt in range(tries):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": UA})
+            with urllib.request.urlopen(req, timeout=600) as r:
+                body = r.read().decode("utf-8").lstrip("\ufeff")
+            header = body.split("\n", 1)[0].lower()
+            if "rok" not in header or "," not in header:   # e.g. "… pre rok 2027 nebol nájdený."
+                raise RuntimeError(f"not a CSV: {body[:80]!r}")
+            return body
+        except (urllib.error.URLError, TimeoutError) as e:
+            last = e
+        time.sleep(3 * (attempt + 1))
+    raise RuntimeError(f"failed after {tries} tries: {url}: {last}")
+
+
 def cached(path: Path, url: str, force: bool = False) -> dict:
     """Return the API payload for `url`, cached at `path` with its provenance
     (source URL and retrieval time) so build.py can cite exactly what it used."""
@@ -137,9 +155,31 @@ def main() -> None:
         have = set(jobs)
         ekv_jobs = [(y, k, f) for y in years for k, f in EKV_CELLS if (y, k) in have]
         problems += [p for p in ex.map(ekv, ekv_jobs) if p]
+
+    # Row-level approved budgets (kapitola x program x COFOG x EKV) and program names
+    # for the two years before every year with a parsed bill annex
+    # (data/navrh_{rok}_programy.csv); build.py estimates that year's COFOG split from them.
+    detail_years = sorted({y - d for p in (ROOT / "data").glob("navrh_*_programy.csv")
+                           for y in [int(p.stem.split("_")[1])] for d in (1, 2, 3)})
+    for y in detail_years:
+        for name, url in ((f"schvaleny-{y}.csv", f"{OPEN_API}schvaleny?rok={y}"),
+                          (f"programy-{y}.csv", f"{OPEN_API}programy/{y}?format=csv")):
+            path = CACHE / "detail" / name
+            if path.exists() and not args.force:
+                continue
+            try:
+                body = get_text(url)
+            except (urllib.error.HTTPError, RuntimeError) as e:
+                problems.append(f"{name}: {e}")
+                continue
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(body, encoding="utf-8")
+            path.with_suffix(".json").write_text(json.dumps(
+                {"url": url, "retrieved_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}), encoding="utf-8")
+
     for p in problems:
         print("error:", p, file=sys.stderr)
-    total = len(jobs) + len(ekv_jobs)
+    total = len(jobs) + len(ekv_jobs) + 2 * len(detail_years)
     print(f"done, {total - len(problems)}/{total} responses cached", file=sys.stderr)
     if problems:
         sys.exit(1)

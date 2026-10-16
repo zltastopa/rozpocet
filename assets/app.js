@@ -137,7 +137,7 @@
     tip.style.left = left + "px"; tip.style.top = top + "px";
   }
   function hideTip() {
-    tip.hidden = true; tipFor = null; tip.classList.remove("pinned");
+    tip.hidden = true; tipFor = null; openedBy = null; tip.classList.remove("pinned");
     document.querySelectorAll(".tile.hl").forEach(t => t.classList.remove("hl"));
     document.querySelectorAll(".sub.on").forEach(s => s.classList.remove("on"));
   }
@@ -159,7 +159,9 @@
     const both = oe ? `<div class="yoy">${state.measure === "schvaleny" ? "Skutočne minuté" : "Schválený rozpočet"} ${state.year}: <b>${eur(oe.tiles[id] ? share(oe.tiles[id].v, oe) : 0)}</b> zo stovky (${mil(oe.tiles[id] ? oe.tiles[id].v : 0)})${oe.provisional ? ", predbežne" : ""}</div>` : "";
     let yoy = "";
     const prev = entry(state.year - 1);
-    if (prev) {
+    const noYoy = (meta.no_yoy || {})[state.measure];
+    if (prev && noYoy) yoy = `<div class="yoy">${esc(noYoy)}</div>`;
+    else if (prev) {
       const pv = prev.tiles[id] ? share(prev.tiles[id].v, prev) : 0, d = share(t.v, e) - pv;
       yoy = Math.abs(d) < 0.005
         ? `<div class="yoy">Podiel oproti ${state.year - 1}: <b>bez zmeny</b> (vtedy ${eur(pv)})</div>`
@@ -260,20 +262,21 @@
   document.addEventListener("pointerdown", ev => { lastPointer = { type: ev.pointerType, t: Date.now() }; }, true);
   const fromPointer = () => Date.now() - lastPointer.t < 600;
   tm.addEventListener("pointermove", ev => {
-    if (ev.pointerType !== "mouse") return;
+    if (ev.pointerType !== "mouse" || openedBy === "pin") return;   // a pinned tooltip stays put
     const h = tileEvent(ev);
     if (!h) return hideTip();
     highlight(h.g, h.child);
     tipFor = h.id; openedBy = "mouse";
     showTip(tileTip(h.id, h.child), ev.clientX, ev.clientY);
   });
-  tm.addEventListener("pointerleave", ev => { if (ev.pointerType === "mouse") hideTip(); });
+  tm.addEventListener("pointerleave", ev => { if (ev.pointerType === "mouse" && openedBy === "mouse") hideTip(); });
   tm.addEventListener("click", ev => {
-    if (lastPointer.type === "mouse" && fromPointer()) return;   // hover already shows it
     const h = tileEvent(ev);
     if (!h) return;
-    if (tipFor === h.id && openedBy === "tap") return hideTip();
-    highlight(h.g, h.child); tipFor = h.id; openedBy = "tap";
+    // a click (mouse) or tap (touch) pins a scrollable tooltip; the same again unpins it
+    const mode = lastPointer.type === "mouse" ? "pin" : "tap";
+    if (tipFor === h.id && openedBy === mode) { openedBy = null; return hideTip(); }
+    highlight(h.g, h.child); tipFor = h.id; openedBy = mode;
     showTip(tileTip(h.id, h.child), ev.clientX, ev.clientY, true);
   });
   tm.addEventListener("focusin", ev => {
@@ -284,6 +287,12 @@
   });
   tm.addEventListener("focusout", () => { if (openedBy === "key") hideTip(); });
   tm.addEventListener("keydown", ev => {
+    // ↑/↓ scroll a long tooltip of the focused tile; ←/→ move between tiles
+    if ((ev.key === "ArrowDown" || ev.key === "ArrowUp") && !tip.hidden) {
+      ev.preventDefault();
+      tip.scrollTop += ev.key === "ArrowDown" ? 60 : -60;
+      return;
+    }
     if (ev.key !== "ArrowRight" && ev.key !== "ArrowLeft") return;
     const all = [...tm.querySelectorAll(".tile")], i = all.indexOf(document.activeElement);
     if (i < 0) return;
@@ -333,7 +342,8 @@
       for (const t of TILES.filter(t => t.group === g.id && e.tiles[t.id]).sort((a, b) => e.tiles[b.id].v - e.tiles[a.id].v)) {
         const tv = e.tiles[t.id].v;
         let d = "";
-        if (prev) { const x = share(tv, e) - (prev.tiles[t.id] ? share(prev.tiles[t.id].v, prev) : 0); d = (x >= 0 ? "+" : "−") + nf2.format(Math.abs(x)); }
+        if (prev && (t.no_yoy || {})[state.measure]) d = "neporovnateľné";
+        else if (prev) { const x = share(tv, e) - (prev.tiles[t.id] ? share(prev.tiles[t.id].v, prev) : 0); d = (x >= 0 ? "+" : "−") + nf2.format(Math.abs(x)); }
         rows += `<tr><td>${esc(t.name)}</td><td>${esc(g.name)}</td><td>${eur(share(tv, e))}</td><td>${mil(tv)}</td><td>${d}</td></tr>`;
       }
     }

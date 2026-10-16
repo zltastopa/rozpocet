@@ -50,6 +50,15 @@ def main() -> None:
         f"{r['rozdiel_eur']:,.2f} €".replace(",", " ").replace(".", ",")
         for r in DATA["residuals"]) or "žiadne"
     src = DATA["source"]
+    # The next year's budget appears only once MF publishes its COFOG split; say so
+    # only while it is missing, so the note disappears by itself after a refresh.
+    next_year = int(last) + 1
+    next_year_note = "" if str(next_year) in DATA["years"] else (
+        f"<p><b>Rok {next_year}:</b> rozdelenie rozpočtu na rok {next_year} podľa funkčnej klasifikácie "
+        "ministerstvo na rozpocet.sk zatiaľ nezverejnilo"
+        + (" (parlament rozpočet schválil 14. 10. 2026, prílohy zákona však toto rozdelenie neobsahujú)"
+           if next_year == 2027 else "")
+        + ". Doplní sa automaticky pri najbližšej mesačnej obnove dát, keď bude k dispozícii.</p>")
     payload = json.dumps({**DATA, "footnoted": FOOTNOTED, "site": SITE}, ensure_ascii=False,
                          separators=(",", ":")).replace("</", "<\\/")
 
@@ -79,8 +88,9 @@ def main() -> None:
   </div>
   <p class="tagline">Štátny rozpočet Slovenska zmenšený na 100&nbsp;€</p>
   <p class="sub">Keby štát z rozpočtu minul namiesto miliárd len jednu stovku, koľko by išlo na školy,
-    dávky, dôchodky, armádu či úroky z dlhu? Každá dlaždica je podiel z výdavkov štátneho rozpočtu,
-    od roku {first} po {last}. Po nabehnutí myšou (alebo ťuknutí) uvidíš, z čoho sa skladá a kto ju platí.</p>
+    dávky, dôchodky, armádu či úroky z dlhu? Každá dlaždica predstavuje podiel na výdavkoch štátneho
+    rozpočtu, za roky {first} až {last}. Keď na dlaždicu prejdeš kurzorom alebo na ňu ťukneš, uvidíš,
+    z čoho sa skladá a z ktorých rozpočtových kapitol sa financuje.</p>
   <p class="scope"><b>Čo sa počíta:</b> štátny rozpočet, teda súčet kapitol zo zákona o štátnom rozpočte,
     vrátane transferov, ktoré štát posiela Sociálnej poisťovni a zdravotným poisťovniam. Nepočítajú sa
     dôchodky a zdravotná starostlivosť, ktoré tieto inštitúcie platia z odvodov, ani rozpočty obcí a krajov.
@@ -127,10 +137,12 @@ def main() -> None:
   <p><b>Hranica:</b> štátny rozpočet = súčet kapitol (pre rok 2026 presne 32&nbsp;899&nbsp;667&nbsp;683&nbsp;€
     ako v zákone č.&nbsp;303/2025 Z.&nbsp;z.). Nepoužívame súhrn „Štátny rozpočet“ z API, ktorý
     pridáva aj účty ako Štátny dlh a tým niektoré peniaze počíta dvakrát (raz ako transfer z kapitoly,
-    raz ako výdavok príjemcu). <b>Schválený rozpočet</b> je pôvodne schválený zákon, <b>skutočnosť</b> je
-    skutočné čerpanie (za posledný uzavretý rok predbežné, kým nie je schválený záverečný účet; za
-    bežný rok sa nezobrazuje, lebo je neúplné). Sumy pred rokom 2009 sú prepočítané z korún kurzom
-    30,1260&nbsp;Sk/€, tak ako ich zverejňuje ministerstvo.</p>
+    raz ako výdavok príjemcu). <b>Schválený rozpočet</b> je rozpočet podľa zákona o štátnom rozpočte
+    vrátane jeho prípadných noviel počas roka (napríklad v roku 2020 sa výdavky novelou zvýšili z
+    18,56 na 26,32 mld.&nbsp;€), tak ako ho vedie ministerstvo. <b>Skutočnosť</b> je skutočné čerpanie;
+    konečná je po schválení štátneho záverečného účtu (naposledy za rok {DATA['final_account_through']}),
+    za neskoršie uzavreté roky je označená ako predbežná a za bežný rok sa nezobrazuje, lebo je neúplná.
+    Sumy pred rokom 2009 sú prepočítané z korún kurzom 30,1260&nbsp;Sk/€, tak ako ich zverejňuje ministerstvo.</p>
   <p><b>Dlaždice:</b> každé euro je priradené práve raz, podľa pravidiel v poradí: (1) platby
     Ministerstva zdravotníctva za poistencov štátu (ekonomická položka 642031) idú do Zdravotníctva,
     hoci ich MF od roku 2013 vedie v sociálnom zabezpečení; odvod do rozpočtu EÚ (649005) a transfer
@@ -139,9 +151,7 @@ def main() -> None:
     (3) zvyšok podľa skupín COFOG. Skript skontroluje, že súčet dlaždíc sa pre každý rok a typ údajov
     zhoduje so zverejneným celkom na euro presne; inak dáta nezverejní. Drobné rozdiely medzi dvoma
     zdrojmi MF pri rozdelení položiek: {esc(residuals)} (zostávajú v pôvodnej dlaždici).</p>
-  <p><b>Rok 2027:</b> parlament schválil rozpočet na rok 2027 14. 10. 2026, ministerstvo však jeho
-    rozdelenie podľa funkčnej klasifikácie zatiaľ nezverejnilo (prílohy zákona ho neobsahujú). Doplní sa
-    automaticky, keď sa objaví na rozpocet.sk.</p>
+  {next_year_note}
   <p><b>Dáta na stiahnutie:</b> <a href="data/stovka.json">stovka.json</a> (to, čo vidíš na stránke),
     <a href="data/kapitola_fnc.csv">kapitola_fnc.csv</a> (každá kapitola × COFOG × rok s priradenou dlaždicou).
     Kód: <a href="{REPO}" target="_blank" rel="noopener">github.com/zltastopa/rozpocet</a>.

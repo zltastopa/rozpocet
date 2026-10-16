@@ -53,12 +53,13 @@ GROUPS = [
 # id, group, full name, short label for the tile (None = same), footnote
 TILES = [
     ("dochodky", "soc", "Dôchodky", None,
-     "Väčšinu dôchodkov vypláca Sociálna poisťovňa z odvodov, mimo štátneho rozpočtu. "
-     "Štátny rozpočet do nej posiela najmä transfer z Všeobecnej pokladničnej správy "
-     "(program „Transfer Sociálnej poisťovni“) a platí dávky v starobe cez jednotlivé ministerstvá."),
+     "Dôchodky vypláca Sociálna poisťovňa najmä z odvodov; štátny rozpočet jej posiela transfer na ich "
+     "doplatenie. Ten tu nepočítame dvakrát: v stovke je len to, čo Sociálna poisťovňa naozaj vyplatí, "
+     "plus dávky v starobe, ktoré priamo platia ministerstvá."),
     ("davky", "soc", "Dávky a sociálna pomoc", "Dávky",
-     "Prídavky na deti, rodičovský príspevok, príspevky na kompenzáciu ťažkého zdravotného postihnutia, "
-     "pomoc v hmotnej núdzi a ďalšie sociálne výdavky (COFOG 10 okrem staroby a pozostalých)."),
+     "Nemocenské a materské dávky, dávka v nezamestnanosti, prídavky na deti, rodičovský príspevok, "
+     "príspevky na kompenzáciu ťažkého zdravotného postihnutia, pomoc v hmotnej núdzi a správa "
+     "Sociálnej poisťovne."),
     ("trh", "soc", "Trh práce a zamestnanosť", "Trh práce",
      "Aktívne opatrenia na trhu práce a ďalšie výdavky všeobecnej pracovnej oblasti (COFOG 0412)."),
     ("skolstvo", "ludia", "Školstvo", None,
@@ -111,14 +112,43 @@ PREFIX_RULES = [
 
 # Special (kapitola, COFOG) cells split by EKV item: EKV code -> (tile, child label).
 # EKV None = the whole cell. Evidence: kapitola x FNC x EKV cross-tab on rozpocet.sk.
+# CONSOLIDATED = a transfer to Sociálna poisťovňa, which is inside the stovka itself, so
+# the money is counted once, where SP spends it (= SP revenue 312001 "transfer zo ŠR").
+CONSOLIDATED = "konsolidovane"
 SPECIAL = {
     ("21", "1090"): {"642031": ("zdravie", "Platby za poistencov štátu")},
     ("21", "0760"): {"642031": ("zdravie", "Platby za poistencov štátu")},
     ("48", "0113"): {"649005": ("eu", "Odvod do rozpočtu EÚ")},
-    ("48", "1020"): {"641003": ("dochodky", "Transfer Sociálnej poisťovni")},
+    ("48", "1020"): {"641003": (CONSOLIDATED, "Transfer Sociálnej poisťovni")},
+    # 2022: 3,49 mil. € from VPS under COFOG 1050 (nezamestnanosť) to Sociálna poisťovňa
+    ("48", "1050"): {"641003": (CONSOLIDATED, "Transfer Sociálnej poisťovni")},
     ("48", "0112"): {None: ("vps", None)},  # child = EKV item name
 }
 assert set(SPECIAL) == set(EKV_CELLS), "SPECIAL and fetch.EKV_CELLS must list the same cells"
+
+# EKV 641003 ("Sociálnej poisťovni a zdravotným poisťovniam") flows of the state budget, as found by
+# scanning every kapitola and year: VPS -> Sociálna poisťovňa (consolidated above) and transfers to
+# health insurers under COFOG 07 (outside the stovka, so real expenditure). Anything else fails the
+# build until it is understood.
+ALLOWED_641003 = {("48", "1020"), ("48", "1050"), ("21", "0760"), ("04", "0760")}
+# Tiny one-off 641003 amounts whose recipient (SP or a health insurer) the data does not say; kept
+# as state expenditure. Even if all went to SP, the double count is at most 0,25 mil. € a year.
+KNOWN_SMALL_641003 = {(2005, "22", "0210"), (2006, "22", "0210"), (2006, "20", "0912"),
+                      (2007, "22", "0412"), (2019, "27", "0421")}
+
+# Sociálna poisťovňa is classified by economic item (EKV), the one classification it publishes
+# for every year and measure (its COFOG split is missing in the approved budgets 2006–2008).
+# Pension benefits go to Dôchodky, everything else is social security, i.e. Dávky.
+SP_NAME = "Sociálna poisťovňa"
+SP_INTERNAL_EKV = "641003"              # transfers between SP's own funds (0 in every approved budget)
+SP_ITEMS = {   # EKV -> (tile, child); anything else -> ("davky", "Správa a ostatné výdavky …")
+    "642016": ("dochodky", "Dôchodky zo starobného poistenia (Sociálna poisťovňa)"),
+    "642020": ("dochodky", "Dôchodky z invalidného poistenia (Sociálna poisťovňa)"),
+    "642015": ("davky", "Nemocenské a materské dávky (Sociálna poisťovňa)"),
+    "642017": ("davky", "Úrazové dávky (Sociálna poisťovňa)"),
+    "642033": ("davky", "Dávka v nezamestnanosti (Sociálna poisťovňa)"),
+}
+SP_OTHER = ("davky", "Správa a ostatné výdavky Sociálnej poisťovne")
 
 # Plain-language child names for COFOG groups (3-digit) where the official name is clumsy.
 CHILD_NAMES = {
@@ -286,6 +316,12 @@ def add_estimates(out_years: dict, problems: list[str]) -> list[int]:
         year = int(path.stem.split("_")[1])
         if str(year) in out_years:
             continue  # published data exists: no estimate (older annexes only serve backtests)
+        sp = CACHE / "sp" / str(year) / "ekv.json"
+        if not sp.exists() or not (load(sp)["data"].get("payload") or []):
+            # the stovka includes Sociálna poisťovňa; without its budget for the year an
+            # estimate would mix boundaries, so the year is left out until it is available
+            print(f"note: {year} not estimated – Sociálna poisťovňa budget not available", file=sys.stderr)
+            continue
         with (DATA / f"navrh_{year}_suhrn.csv").open(encoding="utf-8") as f:
             meta = next(csv.DictReader(f))
         tiles, report = run(year)
@@ -321,6 +357,51 @@ def add_estimates(out_years: dict, problems: list[str]) -> list[int]:
 
 
 
+def check_641003(year: int, problems: list[str]) -> None:
+    """Fail on any EKV 641003 transfer of a kapitola outside ALLOWED_641003 (any measure)."""
+    for path in (CACHE / str(year)).glob("t641003-*.json"):
+        k = path.stem.removeprefix("t641003-")
+        for x in load(path)["data"].get("payload") or []:
+            if len(x["kod"]) == 4 and (k, x["kod"]) not in ALLOWED_641003 and (year, k, x["kod"]) not in KNOWN_SMALL_641003 and any(
+                    abs(x["hodnoty"].get(m.upper()) or 0) > TOLERANCE_EUR for m in MEASURES):
+                problems.append(f"{year}: unexpected EKV 641003 transfer in kapitola {k} x COFOG {x['kod']}")
+
+
+def own_amounts(payload: list[dict], field: str) -> list[tuple[str, str, float]]:
+    """(code, name, own €) for every node of a classification tree: its value minus its children.
+    Unlike taking only leaves, this keeps amounts booked at a parent level (seen in old years)."""
+    children = defaultdict(float)
+    for x in payload:
+        if x["nadurovenKod"]:
+            children[x["nadurovenKod"]] += x["hodnoty"].get(field) or 0
+    return [(x["kod"], x["nazov"].strip(), (x["hodnoty"].get(field) or 0) - children[x["kod"]]) for x in payload]
+
+
+def sp_part(year: int, m: str, add, rows: list[dict], problems: list[str]) -> tuple[float, float] | None:
+    """Add Sociálna poisťovňa's expenditure for `year`/measure `m` to the tiles.
+    Returns (SP total, SP-internal transfers excluded) or None if SP data is unavailable."""
+    field = m.upper()
+    path = CACHE / "sp" / str(year) / "ekv.json"
+    payload = (load(path)["data"].get("payload") or []) if path.exists() else []
+    spolu = next((x for x in payload if x["kod"] == "SpoluV"), None)
+    if not spolu or not spolu["hodnoty"].get(field):
+        return None
+    total, internal = spolu["hodnoty"][field], 0.0
+    parts = [(c, n, v) for c, n, v in own_amounts(payload, field) if abs(v) > 0.005]
+    if abs(sum(v for _, _, v in parts) - total) > TOLERANCE_EUR:
+        problems.append(f"{year} {m}: Sociálna poisťovňa EKV items != total")
+    for eko, _, v in parts:
+        if eko == SP_INTERNAL_EKV:
+            internal += v
+            tile = CONSOLIDATED
+        else:
+            tile, child = SP_ITEMS.get(eko, SP_OTHER)
+            add(m, tile, child, SP_NAME, v)
+        rows.append({"rok": year, "kapitola": "SP", "nazov_kapitoly": SP_NAME, "cofog": "",
+                     "ekv": eko, "dlazdica": tile, m: round(v, 2)})
+    return total, internal
+
+
 def main() -> None:
     series = load(CACHE / "series.json")
     # 2005 has no execution data and predates the series MF charts itself,
@@ -343,6 +424,8 @@ def main() -> None:
         acc = {m: defaultdict(lambda: {"v": 0.0, "children": defaultdict(float), "kap": defaultdict(float)})
                for m in MEASURES}
         have = {m: False for m in MEASURES}
+        transfer = {m: 0.0 for m in MEASURES}   # state budget -> Sociálna poisťovňa (consolidated away)
+        check_641003(y, problems)
 
         def add(m: str, tile: str, child: str, kap_name: str, v: float) -> None:
             t = acc[m][tile]
@@ -412,7 +495,9 @@ def main() -> None:
                         name = e["nazov"].strip()
                         child = EKV_NAMES.get(e["kod"]) or (f"{parent}: {name[0].lower()}{name[1:]}" if parent else name)
                     for m, v in ev.items():
-                        if v:
+                        if v and tile == CONSOLIDATED:
+                            transfer[m] += v   # counted once: as Sociálna poisťovňa's own spending
+                        elif v:
                             add(m, tile, child, kap_name, v)
                         rest[m] -= v
                     rows.append({"rok": y, "kapitola": k, "nazov_kapitoly": kap_name, "cofog": code,
@@ -433,13 +518,21 @@ def main() -> None:
                 continue
             if m == "skutocnost" and y >= this_year:
                 continue  # current-year execution is partial
+            sp = sp_part(y, m, add, rows, problems)
+            if sp is None:
+                continue  # Sociálna poisťovňa data unavailable for this year/measure: no stovka
+            sp_total, sp_internal = sp
             total = sum(t["v"] for t in acc[m].values())
             published = spend_rec["SCHVALENY" if m == "schvaleny" else "SKUTOCNOST"] or 0
-            if abs(total - published) > TOLERANCE_EUR:
-                problems.append(f"{y} {m}: tiles {total:.2f} != published total {published:.2f}")
+            expected = published - transfer[m] + sp_total - sp_internal
+            if abs(total - expected) > TOLERANCE_EUR:
+                problems.append(f"{y} {m}: tiles {total:.2f} != state {published:.2f} − transfer "
+                                f"{transfer[m]:.2f} + SP {sp_total:.2f} − SP internal {sp_internal:.2f}")
             rev = revenue_rec["SCHVALENY" if m == "schvaleny" else "SKUTOCNOST"]
             tiles = serialize_tiles(acc[m], f"{y} {m}", problems)
-            entry = {"total": round(total), "revenue": round(rev) if rev is not None else None, "tiles": tiles}
+            entry = {"total": round(total), "revenue": round(rev) if rev is not None else None, "tiles": tiles,
+                     "state_total": round(published), "sp_total": round(sp_total),
+                     "transfer": round(transfer[m]), "sp_internal": round(sp_internal)}
             if m == "skutocnost" and y > FINAL_ACCOUNT_THROUGH:
                 entry["provisional"] = True
             yd[m] = entry

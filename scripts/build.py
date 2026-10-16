@@ -321,6 +321,12 @@ def add_estimates(out_years: dict, problems: list[str]) -> list[int]:
                               "tile": r["dlazdica"] or None, "child": r["polozka"] or None})
         if not any(k["code"] == "0HW03" for k in known):
             problems.append(f"{year}: no transfer to Sociálna poisťovňa in data/navrh_vps.csv")
+        # sibling item codes must not be prefixes of each other (pieces() nests by prefix,
+        # e.g. "0HW04#1" would swallow "0HW04#10")
+        for a in known:
+            for b in known:
+                if a is not b and "#" in a["code"] and "#" in b["code"] and b["code"].startswith(a["code"]):
+                    problems.append(f"{year}: item code {a['code']} is a prefix of {b['code']}")
         cells, report = estimate(year, classify, names, known)
         acc: dict = defaultdict(lambda: {"v": 0.0, "children": defaultdict(float), "kap": defaultdict(float)})
 

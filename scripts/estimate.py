@@ -52,18 +52,32 @@ def same_name(a: str | None, b: str | None) -> bool | None:
     return a == b or SequenceMatcher(None, a, b).ratio() >= 0.75
 
 
-def load_rows(year: int, classify) -> list[tuple[str, str, str, str, str, float]]:
-    """(kapitola, program, EKV, tile, child, €) for approved state-budget expenditure rows."""
+# Plán obnovy a odolnosti ends in 2026: the 2027 main book shows zdroj POO 0 in 2027 N for
+# every kapitola except VPS (whose programs are carved out exactly), so a 2027 program has no
+# POO money and its POO-funded rows (ZDR 1P..) of a year earlier must not shape its split
+POO_LAST_YEAR = 2026
+
+
+def load_rows(year: int, classify, drop_poo: bool) -> list[tuple[str, str, str, str, str, str, float]]:
+    """(kapitola, program, EKV, FNC, tile, child, €) for approved state-budget expenditure rows."""
     out = []
     with (DETAIL / f"schvaleny-{year}.csv").open(encoding="utf-8") as f:
         for r in csv.DictReader(f):
             if r["TYP"] != "VYDAVKY" or r["DRH"] != "211" or r["ORG"] == "120":
                 continue  # only kapitoly of the state budget (not Štátny dlh, SURO, SFA)
+            if drop_poo and r["ZDR"].startswith("1P"):
+                continue
             v = float(r["SCHV_ROK"] or 0)
             if v:
                 tile, child = classify(r["ORG"], r["FNC"], r["EKO"])
-                out.append((r["ORG"], r["PRG"], r["EKO"], tile, child, v))
+                out.append((r["ORG"], r["PRG"], r["EKO"], r["FNC"], tile, child, v))
     return out
+
+
+def row_filter(spec: str):
+    """'PRG|EKV|FNC' (prefixes, empty = any) -> predicate on (program, EKV, FNC)."""
+    prg, eko, fnc = (spec.split("|") + ["", ""])[:3]
+    return lambda p, e, f: p.startswith(prg) and e.startswith(eko) and f.startswith(fnc)
 
 
 def load_names(year: int) -> dict[tuple[str, str], str]:
@@ -80,7 +94,10 @@ def pieces(annex: list[dict]) -> list[dict]:
     nested listed subprograms. Subprograms can nest (0HW01 > 0HW0101), so a node's
     direct children are the listed codes under it with no other listed code between.
     A code "PRG~EKV" is one economic item inside program PRG (e.g. 0HW02~649005, the
-    odvod do rozpočtu EÚ): its parent's remainder then also excludes rows of that item."""
+    odvod do rozpočtu EÚ): its parent's remainder then also excludes rows of that item.
+    A code "PRG#NN" is a purpose the main book itemises inside PRG (e.g. MO's hospital
+    transfer); its "zaklad" lists the base-year rows it replaces ('PRG|EKV|FNC', ';'),
+    which the parent's remainder then excludes so the purpose is not counted twice."""
     out = []
     by_kap = defaultdict(list)
     for r in annex:
@@ -103,7 +120,9 @@ def pieces(annex: list[dict]) -> list[dict]:
                     raise ValueError(f"kapitola {kap} {code}: listed subprograms exceed it")
                 out.append({"kap": kap, "code": code, "name": n["nazov"], "amount": rest,
                             "exclude": [s["program"] for s in direct if "~" not in s["program"]],
-                            "exclude_eko": {s["program"].split("~")[1] for s in direct if "~" in s["program"]}})
+                            "exclude_eko": {s["program"].split("~")[1] for s in direct if "~" in s["program"]},
+                            "exclude_rows": [row_filter(f) for s in direct
+                                             for f in (s.get("zaklad") or "").split(";") if f]})
     return [p for p in out if p["amount"]]
 
 
@@ -116,29 +135,32 @@ def estimate(year: int, classify, kap_names: dict[str, str], known: list[dict] |
     annex = list(csv.DictReader((ROOT / "data" / f"navrh_{year}_programy.csv").open(encoding="utf-8")))
     known = known or []
     annex += [{"kapitola": k["kap"], "nazov_kapitoly": "", "program": k["code"], "nazov": k["name"],
-               "podprogram": "1", "suma": str(k["amount"])} for k in known]
+               "podprogram": "1", "suma": str(k["amount"]), "zaklad": k.get("zaklad", "")} for k in known]
     fixed = {(k["kap"], k["code"]): (k["tile"], k["child"]) for k in known if k.get("tile")}
-    r1, r2 = load_rows(year - 1, classify), load_rows(year - 2, classify)
+    drop_poo = year > POO_LAST_YEAR
+    r1, r2 = load_rows(year - 1, classify, drop_poo), load_rows(year - 2, classify, drop_poo)
     n1, n2 = load_names(year - 1), load_names(year - 2)
 
     def shares(rows, pred) -> dict:
         acc = defaultdict(float)
-        for kap, prg, eko, tile, child, v in rows:
-            if pred(kap, prg, eko):
+        for kap, prg, eko, fnc, tile, child, v in rows:
+            if pred(kap, prg, eko, fnc):
                 acc[(tile, child)] += v
         tot = sum(acc.values())
         return {k: v / tot for k, v in acc.items()} if tot > 0 else {}
 
-    def matches(code, exclude, exclude_eko):
-        return lambda prg, eko: (prg.startswith(code) and not any(prg.startswith(x) for x in exclude)
-                                 and eko not in exclude_eko)
+    def matches(p):
+        return lambda prg, eko, fnc: (prg.startswith(p["code"]) and not any(prg.startswith(x) for x in p["exclude"])
+                                      and eko not in p["exclude_eko"]
+                                      and not any(f(prg, eko, fnc) for f in p["exclude_rows"]))
 
     out = defaultdict(float)
     level_amount = defaultdict(float)
     unverified = 0.0   # amount whose program code has no name in MF's program list
     uncertain = 0.0
+    uncertain_parts = []
     for p in pieces(annex):
-        m = matches(p["code"], p["exclude"], p["exclude_eko"])
+        m = matches(p)
         chosen = (("presna_suma", {fixed[(p["kap"], p["code"])]: 1.0}, True)
                   if (p["kap"], p["code"]) in fixed else None)
         for level, rows, names, same_kap in (() if chosen else
@@ -149,17 +171,17 @@ def estimate(year: int, classify, kap_names: dict[str, str], known: list[dict] |
                 known_name = names.get((p["kap"], p["code"])) or next(
                     (nm for (k, c), nm in names.items() if c == p["code"]), None)
                 ident = same_name(p["name"], known_name)
-                sh = shares(rows, lambda k, prg, eko: k == p["kap"] and m(prg, eko)) if ident is not False else {}
+                sh = shares(rows, lambda k, prg, eko, fnc: k == p["kap"] and m(prg, eko, fnc)) if ident is not False else {}
             else:
                 cands = {k for (k, c), nm in names.items() if c == p["code"] and same_name(p["name"], nm)}
                 ident = bool(cands) or None
-                sh = shares(rows, lambda k, prg, eko: k in cands and m(prg, eko)) if cands else {}
+                sh = shares(rows, lambda k, prg, eko, fnc: k in cands and m(prg, eko, fnc)) if cands else {}
             if sh:
                 chosen = (level, sh, ident)
                 break
         if chosen is None:
-            sh = shares(r1, lambda k, prg, eko: k == p["kap"])
-            chosen = ("kapitola", sh, True) if sh else ("celok", shares(r1, lambda k, prg, eko: True), True)
+            sh = shares(r1, lambda k, prg, eko, fnc: k == p["kap"])
+            chosen = ("kapitola", sh, True) if sh else ("celok", shares(r1, lambda *_: True), True)
         level, sh, ident = chosen
         level_amount[level] += p["amount"]
         if ident is None:
@@ -172,7 +194,14 @@ def estimate(year: int, classify, kap_names: dict[str, str], known: list[dict] |
         for (tile, _), s in sh.items():
             by_tile[tile] += s
         if level != "presna_suma":
-            uncertain += p["amount"] * (1 - max(by_tile.values()))
+            u = p["amount"] * (1 - max(by_tile.values()))
+            uncertain += u
+            if u:
+                top = max(by_tile, key=by_tile.get)
+                uncertain_parts.append({"kapitola": kap_names.get(p["kap"], p["kap"]), "program": p["code"],
+                                        "nazov": p["name"], "suma": round(p["amount"]), "neiste": round(u),
+                                        "podiely": {t: round(s, 3) for t, s in sorted(by_tile.items(), key=lambda x: -x[1])},
+                                        "hlavna": top})
 
     total = sum(int(r["suma"]) for r in annex if r["podprogram"] == "0")
     if abs(sum(out.values()) - total) > 1:
@@ -181,6 +210,7 @@ def estimate(year: int, classify, kap_names: dict[str, str], known: list[dict] |
         "levels": [{"id": lid, "popis": desc, "suma": round(level_amount.get(lid, 0))} for lid, desc in LEVELS],
         "bez_overenia_nazvu": round(unverified),
         "neiste": round(uncertain),
+        "neiste_programy": sorted(uncertain_parts, key=lambda x: -x["neiste"])[:8],
         "zaklad": [year - 1, year - 2],
         "zdroje_riadkov": [detail_meta(year - 1)["url"], detail_meta(year - 2)["url"]],
     }

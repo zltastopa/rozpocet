@@ -111,20 +111,30 @@ financií SR (licencia CC0):
 - **Rok 2027 je čiastočne odhad.** Presné sú: celkové výdavky a príjmy štátu
   (príloha č. 1 zákona), výdavky Sociálnej poisťovne (jej schválený rozpočet po
   riadkoch, `data/navrh_2027_sp.csv`, bez finančných operácií) a transfer zo štátu
-  do nej (2 000 000 000 €, rovnako v oboch dokumentoch). Odhadnuté je rozdelenie
-  výdavkov štátu do oblastí (`scripts/estimate.py`): sumy programov z prílohy č. 4
-  (`data/navrh_2027_programy.csv`) a skupiny Všeobecnej pokladničnej správy z
-  hlavnej knihy (`data/navrh_polozky.csv`: odvod do EÚ a položky „Správy ostatných
-  výdavkov“ s účelom, napr. 700 mil. € do štátnych finančných aktív, 482 mil. €
-  na sociálne a prorodinné zmeny) sa priradia priamo; ostatné programy sa rozdelia
-  podľa toho, ako sa ten istý program delil v schválenom rozpočte 2026 (inak
-  2025, inak podľa celej kapitoly). Asi 75 % stovky 2027 je tak presných alebo
-  v programoch, ktoré v roku 2026 išli celé (≥ 99 %) do jednej dlaždice; zvyšok
-  sú zmiešané programy (napr. Obrana, MV „Efektívna štátna správa“). Spätný test
-  na roku 2026 na tej istej hranici: chyba dlaždice v priemere 0,17 € zo stovky,
-  najviac 0,59 €. Na stránke je rok výrazne označený („odhad“, „≈“, šrafovanie);
+  do nej (2 000 000 000 €, rovnako v oboch dokumentoch). Rozdelenie výdavkov štátu
+  do oblastí ministerstvo zatiaľ nezverejnilo, preto ho skladáme
+  (`scripts/estimate.py`) presne tam, kde sa dá, a odhadujeme len zvyšok:
+  - **Presne podľa hlavnej knihy** (`data/navrh_polozky.csv`, každá suma so
+    zdrojom): odvod do EÚ, položky „Správy ostatných výdavkov“ (napr. 700 mil. €
+    do štátnych finančných aktív, 482 mil. € na sociálne a prorodinné zmeny) a
+    účelové sumy vnútri programov ministerstiev, napr. 560 + 50 mil. € vojenským
+    nemocniciam, 138 mil. € na výsluhové dávky vojakov, Akadémia PZ, 13. dôchodok,
+    Program Slovensko na bývanie, celý program 076 MŽP. Položka s kódom COFOG sa
+    zaradí rovnako ako riadky rozpočtu; riadky predchádzajúceho roka, ktoré
+    nahrádza (stĺpec `zaklad`), sa zo zvyšku programu vynechajú, aby sa
+    nezapočítali dvakrát.
+  - **Zvyšok programov** z prílohy č. 4 (`data/navrh_2027_programy.csv`) sa
+    rozdelí tak, ako sa ten istý program delil v schválenom rozpočte 2026 (inak
+    2025, inak podľa celej kapitoly), bez riadkov Plánu obnovy (zdroj 1P), lebo
+    ten v roku 2027 už v kapitolách nie je.
+  Väčšina programov ide celá do jednej oblasti, takže naozaj neisté je len
+  rozdelenie asi 1,05 mld. € (≈ 2,13 € zo stovky), hlavne v programoch 077
+  (vysoké školy: školstvo alebo veda), 0D6 MV (polícia alebo správa) a 072 MF
+  (daňová alebo colná správa); hlavná kniha ich nerozpisuje. Spätný test na roku
+  2026 na tej istej hranici: chyba dlaždice v priemere 0,09 € zo stovky,
+  najviac 0,58 €. Na stránke je rok výrazne označený („odhad“, „≈“, šrafovanie);
   keď MF zverejní skutočné členenie, odhad sa automaticky nahradí. Odhad 2027:
-  dôchodky ≈ 29,39 €, dávky ≈ 11,78 €, školstvo ≈ 10,65 €.
+  dôchodky ≈ 29,33 €, dávky ≈ 11,81 €, školstvo ≈ 10,65 €, zdravotníctvo ≈ 6,18 €.
 
 Rozhodnutia o hraniciach, kategóriách a zobrazení boli prediskutované a
 odsúhlasené v nezávislej revízii (Codex).

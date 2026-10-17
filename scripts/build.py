@@ -318,8 +318,12 @@ def add_estimates(out_years: dict, problems: list[str]) -> list[int]:
                     if abs(amount - transfer) > 1000:   # main book is in thousands of euros
                         problems.append(f"{year}: main-book transfer to SP {amount} != {transfer:.0f}")
                     amount = round(transfer)
+                # a COFOG code places the item exactly like the budget's own rows; VPS groups
+                # without one name their tile directly
+                tile, child = (classify(r["kapitola"], r["fnc"], r["eko"]) if r["fnc"]
+                               else (r["dlazdica"] or None, r["polozka"] or None))
                 known.append({"kap": r["kapitola"], "code": r["kod"], "name": r["nazov"], "amount": amount,
-                              "tile": r["dlazdica"] or None, "child": r["polozka"] or None})
+                              "tile": tile, "child": child, "zaklad": r["zaklad"]})
         if not any((k["kap"], k["code"]) == ("48", "0HW03") for k in known):
             problems.append(f"{year}: no transfer to Sociálna poisťovňa in data/navrh_polozky.csv")
         # sibling item codes must not be prefixes of each other (pieces() nests by prefix,

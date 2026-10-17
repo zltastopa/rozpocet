@@ -44,10 +44,18 @@
   function available(y, m) { return !!(D.years[y] && D.years[y][m]); }
   const EST_LINE = "Celkové sumy aj Sociálna poisťovňa sú zo schválených rozpočtov; rozdelenie výdavkov štátu do oblastí je odhad.";
   function estText(y) {
-    const x = D.years[y].schvaleny.estimate, bt = x.backtest;
-    return `Rok ${y}: celkové výdavky a príjmy štátu sú zo zákona a Sociálna poisťovňa z jej schváleného rozpočtu, `
-      + `rozdelenie výdavkov štátu podľa oblastí však ministerstvo ešte nezverejnilo. Tú časť sme odhadli: sumu každého programu `
-      + `z prílohy zákona sme rozdelili tak, ako sa ten istý program delil v rozpočte na rok ${x.zaklad[0]} (prípadne ${x.zaklad[1]}).`
+    const e = D.years[y].schvaleny, x = e.estimate, bt = x.backtest;
+    const top = (x.neiste_programy || []).slice(0, 3).map(p => {
+      const [a, b] = Object.keys(p.podiely);
+      return `„${p.nazov}“ (${p.kapitola}: ${TILE[a].short} alebo ${TILE[b].short})`;
+    });
+    return `Rok ${y}: celkové výdavky a príjmy štátu sú zo zákona a Sociálna poisťovňa z jej schváleného rozpočtu. `
+      + `Rozdelenie výdavkov štátu podľa oblastí ministerstvo zatiaľ nezverejnilo, preto ho skladáme: sumy, ktorých účel `
+      + `uvádza hlavná kniha rozpočtu (napríklad transfer vojenským nemocniciam či odvod do EÚ), dávame priamo do ich dlaždice; `
+      + `ostatné programy z prílohy zákona rozdelíme tak, ako sa ten istý program delil v rozpočte na rok ${x.zaklad[0]} `
+      + `(prípadne ${x.zaklad[1]}). Väčšina programov išla celá do jednej oblasti, takže naozaj neisté je rozdelenie len asi `
+      + `${eur(100 * x.neiste / e.total)} zo stovky`
+      + (top.length ? `, najmä v programoch ${top.join(", ")}.` : ".")
       + (bt ? ` Keď sme rovnakým postupom odhadli rok ${bt.rok}, dlaždice sa od skutočnosti líšili v priemere o ${eur(bt.priemerna_chyba)} `
         + `zo stovky, najviac o ${eur(bt.max_chyba)} pri dlaždici ${TILE[bt.max_dlazdica].short}. Je to chyba v minulosti, nie záruka presnosti odhadu.` : "");
   }

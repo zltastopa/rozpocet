@@ -305,27 +305,29 @@ def add_estimates(out_years: dict, problems: list[str]) -> list[int]:
             tile = rnd_or_prefix(fnc)
             return tile, child_key(tile, fnc, names.get(kap, kap))
 
-        # exact VPS groups from MF's main book (data/navrh_vps.csv); the transfer to SP uses
-        # the exact amount passed in, which must agree with the main book to within its rounding
+        # exact parts of programs from MF's main book (data/navrh_polozky.csv), e.g. VPS groups,
+        # the odvod do EÚ or MO's social security of soldiers; the transfer to SP uses the exact
+        # amount passed in, which must agree with the main book to within its rounding
         known = []
-        with (DATA / "navrh_vps.csv").open(encoding="utf-8") as f:
+        with (DATA / "navrh_polozky.csv").open(encoding="utf-8") as f:
             for r in csv.DictReader(f):
                 if int(r["rok"]) != year:
                     continue
                 amount = int(r["suma"])
-                if r["kod"] == "0HW03":
+                if (r["kapitola"], r["kod"]) == ("48", "0HW03"):
                     if abs(amount - transfer) > 1000:   # main book is in thousands of euros
                         problems.append(f"{year}: main-book transfer to SP {amount} != {transfer:.0f}")
                     amount = round(transfer)
-                known.append({"kap": "48", "code": r["kod"], "name": r["nazov"], "amount": amount,
+                known.append({"kap": r["kapitola"], "code": r["kod"], "name": r["nazov"], "amount": amount,
                               "tile": r["dlazdica"] or None, "child": r["polozka"] or None})
-        if not any(k["code"] == "0HW03" for k in known):
-            problems.append(f"{year}: no transfer to Sociálna poisťovňa in data/navrh_vps.csv")
+        if not any((k["kap"], k["code"]) == ("48", "0HW03") for k in known):
+            problems.append(f"{year}: no transfer to Sociálna poisťovňa in data/navrh_polozky.csv")
         # sibling item codes must not be prefixes of each other (pieces() nests by prefix,
         # e.g. "0HW04#1" would swallow "0HW04#10")
         for a in known:
             for b in known:
-                if a is not b and "#" in a["code"] and "#" in b["code"] and b["code"].startswith(a["code"]):
+                if (a is not b and a["kap"] == b["kap"] and "#" in a["code"] and "#" in b["code"]
+                        and b["code"].startswith(a["code"])):
                     problems.append(f"{year}: item code {a['code']} is a prefix of {b['code']}")
         cells, report = estimate(year, classify, names, known)
         acc: dict = defaultdict(lambda: {"v": 0.0, "children": defaultdict(float), "kap": defaultdict(float)})

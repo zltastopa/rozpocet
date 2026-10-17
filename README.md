@@ -114,7 +114,7 @@ financií SR (licencia CC0):
   do nej (2 000 000 000 €, rovnako v oboch dokumentoch). Odhadnuté je rozdelenie
   výdavkov štátu do oblastí (`scripts/estimate.py`): sumy programov z prílohy č. 4
   (`data/navrh_2027_programy.csv`) a skupiny Všeobecnej pokladničnej správy z
-  hlavnej knihy (`data/navrh_vps.csv`: odvod do EÚ a položky „Správy ostatných
+  hlavnej knihy (`data/navrh_polozky.csv`: odvod do EÚ a položky „Správy ostatných
   výdavkov“ s účelom, napr. 700 mil. € do štátnych finančných aktív, 482 mil. €
   na sociálne a prorodinné zmeny) sa priradia priamo; ostatné programy sa rozdelia
   podľa toho, ako sa ten istý program delil v schválenom rozpočte 2026 (inak

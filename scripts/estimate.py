@@ -136,6 +136,7 @@ def estimate(year: int, classify, kap_names: dict[str, str], known: list[dict] |
     out = defaultdict(float)
     level_amount = defaultdict(float)
     unverified = 0.0   # amount whose program code has no name in MF's program list
+    uncertain = 0.0
     for p in pieces(annex):
         m = matches(p["code"], p["exclude"], p["exclude_eko"])
         chosen = (("presna_suma", {fixed[(p["kap"], p["code"])]: 1.0}, True)
@@ -165,6 +166,13 @@ def estimate(year: int, classify, kap_names: dict[str, str], known: list[dict] |
             unverified += p["amount"]
         for (tile, child), s in sh.items():
             out[(tile, child, kap_names.get(p["kap"], p["kap"]))] += p["amount"] * s
+        # money whose tile is genuinely uncertain: what the program did NOT spend on its
+        # main tile a year earlier (a program that went wholly to one tile adds nothing)
+        by_tile = defaultdict(float)
+        for (tile, _), s in sh.items():
+            by_tile[tile] += s
+        if level != "presna_suma":
+            uncertain += p["amount"] * (1 - max(by_tile.values()))
 
     total = sum(int(r["suma"]) for r in annex if r["podprogram"] == "0")
     if abs(sum(out.values()) - total) > 1:
@@ -172,6 +180,7 @@ def estimate(year: int, classify, kap_names: dict[str, str], known: list[dict] |
     report = {
         "levels": [{"id": lid, "popis": desc, "suma": round(level_amount.get(lid, 0))} for lid, desc in LEVELS],
         "bez_overenia_nazvu": round(unverified),
+        "neiste": round(uncertain),
         "zaklad": [year - 1, year - 2],
         "zdroje_riadkov": [detail_meta(year - 1)["url"], detail_meta(year - 2)["url"]],
     }

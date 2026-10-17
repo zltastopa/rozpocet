@@ -127,12 +127,15 @@ financií SR (licencia CC0):
     rozdelí tak, ako sa ten istý program delil v schválenom rozpočte 2026 (inak
     2025, inak podľa celej kapitoly), bez riadkov Plánu obnovy (zdroj 1P), lebo
     ten v roku 2027 už v kapitolách nie je.
-  Väčšina programov ide celá do jednej oblasti, takže naozaj neisté je len
-  rozdelenie asi 1,05 mld. € (≈ 2,13 € zo stovky), hlavne v programoch 077
-  (vysoké školy: školstvo alebo veda), 0D6 MV (polícia alebo správa) a 072 MF
-  (daňová alebo colná správa); hlavná kniha ich nerozpisuje. Spätný test na roku
-  2026 na tej istej hranici: chyba dlaždice v priemere 0,09 € zo stovky,
-  najviac 0,58 €. Na stránke je rok výrazne označený („odhad“, „≈“, šrafovanie);
+  Väčšina programov išla v roku 2026 celá do jednej oblasti. Programy, ktoré
+  miešajú viac oblastí, dali vtedy mimo svojej hlavnej oblasti spolu asi
+  1,06 mld. € (≈ 2,16 € zo stovky 2027); práve toto rozdelenie odhadujeme, hlavne
+  v programoch 077 (vysoké školy: školstvo alebo veda), 0D6 MV (polícia alebo
+  správa) a 072 MF (daňová alebo colná správa), ktoré hlavná kniha nerozpisuje.
+  Spätný test na roku 2026 na tej istej hranici, s účelovými sumami len z
+  vtedajšej hlavnej knihy (a energetickej položky VPS doplnenej parlamentom):
+  chyba dlaždice v priemere 0,11 € zo stovky, najviac 0,58 €. Na stránke je rok
+  výrazne označený („odhad“, „≈“, šrafovanie);
   keď MF zverejní skutočné členenie, odhad sa automaticky nahradí. Odhad 2027:
   dôchodky ≈ 29,33 €, dávky ≈ 11,81 €, školstvo ≈ 10,65 €, zdravotníctvo ≈ 6,18 €.
 

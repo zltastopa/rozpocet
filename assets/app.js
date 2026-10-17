@@ -53,8 +53,8 @@
       + `Rozdelenie výdavkov štátu podľa oblastí ministerstvo zatiaľ nezverejnilo, preto ho skladáme: sumy, ktorých účel `
       + `uvádza hlavná kniha rozpočtu (napríklad transfer vojenským nemocniciam či odvod do EÚ), dávame priamo do ich dlaždice; `
       + `ostatné programy z prílohy zákona rozdelíme tak, ako sa ten istý program delil v rozpočte na rok ${x.zaklad[0]} `
-      + `(prípadne ${x.zaklad[1]}). Väčšina programov išla celá do jednej oblasti, takže naozaj neisté je rozdelenie len asi `
-      + `${eur(100 * x.neiste / e.total)} zo stovky`
+      + `(prípadne ${x.zaklad[1]}). Väčšina programov išla celá do jednej oblasti; pri tých, ktoré miešajú viac oblastí, `
+      + `išlo vtedy mimo ich hlavnej oblasti spolu asi ${eur(100 * x.neiste / e.total)} zo stovky a práve toto rozdelenie odhadujeme`
       + (top.length ? `, najmä v programoch ${top.join(", ")}.` : ".")
       + (bt ? ` Keď sme rovnakým postupom odhadli rok ${bt.rok}, dlaždice sa od skutočnosti líšili v priemere o ${eur(bt.priemerna_chyba)} `
         + `zo stovky, najviac o ${eur(bt.max_chyba)} pri dlaždici ${TILE[bt.max_dlazdica].short}. Je to chyba v minulosti, nie záruka presnosti odhadu.` : "");

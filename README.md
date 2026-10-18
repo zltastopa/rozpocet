@@ -1,7 +1,7 @@
 # Na čo míňa štát?
 
-Keby bola celá štátna kasa Slovenska (štátny rozpočet a Sociálna poisťovňa spolu) jedna
-stovka: interaktívny treemap ukazuje, koľko z nej ide na dôchodky, dávky, školstvo,
+Keby bola celá štátna kasa Slovenska (štátny rozpočet a Sociálna poisťovňa spolu)
+100 €: interaktívny treemap ukazuje, koľko z toho ide na dôchodky, dávky, školstvo,
 zdravotníctvo, políciu, armádu, dopravu či na obsluhu štátneho dlhu, za roky
 2006 až 2026, skutočné čerpanie len za uzavreté roky. V schválenom rozpočte 2026
 ide na dôchodky 30,72 €, na dávky 11,47 € a na školstvo 11,33 €.

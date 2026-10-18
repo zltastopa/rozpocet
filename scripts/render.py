@@ -21,6 +21,9 @@ DATA = json.loads((ROOT / "data" / "stovka.json").read_text(encoding="utf-8"))
 CSS = (ROOT / "assets" / "style.css").read_text(encoding="utf-8")
 JS = (ROOT / "assets" / "app.js").read_text(encoding="utf-8")
 BADGE = "data:image/png;base64," + base64.b64encode((ROOT / "assets" / "projekt-zlta-stopa.png").read_bytes()).decode()
+# Žltá Stopa icons (from https://zltastopa.sk/), inlined like the badge so the page stays self-contained
+FAVICON = "data:image/png;base64," + base64.b64encode((ROOT / "assets" / "favicon.png").read_bytes()).decode()
+TOUCH_ICON = "data:image/png;base64," + base64.b64encode((ROOT / "assets" / "apple-touch-icon.png").read_bytes()).decode()
 SITE = "rozpocet.zltastopa.sk"
 REPO = "https://github.com/zltastopa/rozpocet"
 
@@ -86,9 +89,11 @@ def main() -> None:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Na čo míňa štát? Štátna kasa ako jedna stovka | Projekt Žltá Stopa</title>
+<title>Na čo míňa štát? Keby bola celá štátna kasa 100 € | Projekt Žltá Stopa</title>
+<link rel="icon" type="image/png" sizes="64x64" href="{FAVICON}">
+<link rel="apple-touch-icon" sizes="180x180" href="{TOUCH_ICON}">
 <meta name="description" content="Na čo ide každých 100 € zo štátnej kasy Slovenska, teda zo štátneho rozpočtu a Sociálnej poisťovne? Interaktívne, za roky {first} až {last}, z otvorených dát Ministerstva financií SR. Projekt Žltá Stopa.">
-<meta property="og:title" content="Na čo míňa štát? Štátna kasa ako jedna stovka">
+<meta property="og:title" content="Na čo míňa štát? Keby bola celá štátna kasa 100 €">
 <meta property="og:description" content="Štátny rozpočet a Sociálna poisťovňa zmenšené na 100 €. Dôchodky, dávky, školstvo, dlh, obrana… za roky {first} až {last}.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://{SITE}/">
@@ -105,8 +110,8 @@ def main() -> None:
       <img src="{BADGE}" alt="Projekt Žltá Stopa" width="118" height="38">
     </a>
   </div>
-  <p class="tagline">Keby bola celá štátna kasa jedna stovka</p>
-  <p class="sub">Koľko z nej ide na dôchodky, školy, dávky, obranu či obsluhu dlhu? Roky {first} až {last}.</p>
+  <p class="tagline">Keby bola celá štátna kasa 100&nbsp;€</p>
+  <p class="sub">Koľko z toho ide na dôchodky, školy, dávky, obranu či obsluhu dlhu? Roky {first} až {last}.</p>
 </header>
 
 <section class="main-chart">

@@ -40,9 +40,10 @@
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
   // ---- state + URL hash (#2025-skutocnost) ----
-  // default: the latest year with published data (an estimate is one click away)
+  // default: the newest approved budget, even when its split by area is partly estimated
+  // (it is clearly marked as an estimate)
   const isEst = (y, m = "schvaleny") => !!((D.years[y] || {})[m] || {}).estimate;
-  const state = { year: YEARS.filter(y => !isEst(y)).pop(), measure: "schvaleny" };
+  const state = { year: YEARS.filter(y => available(y, "schvaleny")).pop(), measure: "schvaleny" };
   function available(y, m) { return !!(D.years[y] && D.years[y][m]); }
   const EST_LINE = "Rozdelenie do oblastí je čiastočne odhadnuté.";
   // the full method (incl. the share of mixed programs) is in the collapsed #odhad methodology block

@@ -50,7 +50,7 @@ svg text { pointer-events:none; }
 /* hover/selection outlines the tile instead of fading it, so white labels keep their contrast */
 .tile:hover .bg, .tile.hl .bg { stroke:var(--ink); stroke-width:2; }
 .tile .sub { fill:transparent; stroke:rgba(255,255,255,.85); stroke-width:1; }
-.tile .sub.on { fill:rgba(255,255,255,.22); }
+.tile .sub.on { fill:transparent; stroke:#fff; stroke-width:3; }
 .tl-amt { font-weight:700; font-variant-numeric:tabular-nums; }
 .tl-name { font-weight:500; }
 

@@ -393,7 +393,7 @@
     yearsBox.querySelectorAll("button").forEach(b => {
       const y = +b.dataset.year, on = y === state.year, ok = available(y, state.measure);
       b.disabled = !ok;
-      b.title = ok ? "" : "Skutočnosť za bežný rok ešte nie je uzavretá";
+      b.title = ok ? "" : "Skutočnosť za tento rok nie je k dispozícii.";
       b.setAttribute("aria-checked", on); b.tabIndex = on ? 0 : -1;
       if (on) b.scrollIntoView({ block: "nearest", inline: "center" });
     });

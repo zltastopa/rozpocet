@@ -62,7 +62,7 @@ svg text { pointer-events:none; }
 /* hover/selection outlines the tile instead of fading it, so white labels keep their contrast */
 .tile:hover .bg, .tile.hl .bg { stroke:var(--ink); stroke-width:2; }
 .tile .sub { fill:transparent; stroke:rgba(255,255,255,.85); stroke-width:1; }
-.tile .sub.on { fill:rgba(255,255,255,.22); }
+.tile .sub.on { fill:transparent; stroke:#fff; stroke-width:3; }
 .tl-amt { font-weight:700; font-variant-numeric:tabular-nums; }
 .tl-name { font-weight:500; }
 
@@ -227,7 +227,7 @@ footer details:last-of-type { border-bottom:1px solid var(--grid); margin-bottom
     <li>Súčet dlaždíc kontrolujeme so zverejnenými celkami (tolerancia 1&nbsp;€); zobrazené sumy sú zaokrúhlené.</li>
     <li>Drobné rozdiely medzi dvoma zdrojmi MF: 2006  kapitola 21 × COFOG 0760 (skutočnosť): 1 384,98 €.</li>
   </ul></details>
-  <details id="odhad"><summary>Rok 2027: čo je presné a čo odhad</summary><ul><li><b>Presné:</b> celkové výdavky a príjmy štátu (<a href="http://www.nrsr.sk/web/Dynamic/DownloadSslpZip.aspx?MasterId=11020&amp;section=3_citanie&amp;WFTID=#Príloha tlac 1555 c.1">zákon, príloha č. 1</a>), Sociálna poisťovňa (<a href="https://rokovania.gov.sk/download.dat?id=685E2ECE65D94CB7976B49E636999089-36659E1E379E0A90838E2F810E930542">schválený rozpočet</a>) a transfer medzi nimi.</li><li><b>Presné:</b> sumy, ktorých účel uvádza hlavná kniha rozpočtu, napríklad 560 + 50 mil. € vojenským nemocniciam alebo odvod do EÚ (<a href="data/navrh_polozky.csv">zoznam so zdrojmi</a>).</li><li><b>Odhad:</b> ostatné <a href="http://www.nrsr.sk/web/Dynamic/DownloadSslpZip.aspx?MasterId=11020&amp;section=3_citanie&amp;WFTID=#Príloha tlac 1555 c. 4">programy zo zákona</a> delíme podľa rozpočtu 2026, prípadne 2025 alebo celej kapitoly; riadky Plánu obnovy vynechávame. Programy, ktoré miešajú oblasti, tvoria ≈ 2,16 € zo stovky.</li><li><b>Test:</b> rovnaký postup na roku 2026 sa mýlil priemerne o 0,11 € na dlaždicu, najviac o 0,58 €.</li><li>Keď ministerstvo zverejní skutočné rozdelenie, odhad sa pri mesačnej obnove nahradí.</li></ul></details>
+  <details id="odhad"><summary>Rok 2027: čo je presné a čo odhad</summary><ul><li><b>Presné:</b> celkové výdavky a príjmy štátu (<a href="http://www.nrsr.sk/web/Dynamic/DownloadSslpZip.aspx?MasterId=11020&amp;section=3_citanie&amp;WFTID=#Príloha tlac 1555 c.1">zákon, príloha č. 1</a>), Sociálna poisťovňa (<a href="https://rokovania.gov.sk/download.dat?id=685E2ECE65D94CB7976B49E636999089-36659E1E379E0A90838E2F810E930542">schválený rozpočet</a>) a transfer medzi nimi.</li><li><b>Presné:</b> sumy, ktorých účel uvádza hlavná kniha rozpočtu, napríklad 560 + 50 mil. € vojenským nemocniciam alebo odvod do EÚ (<a href="data/navrh_polozky.csv">zoznam so zdrojmi</a>).</li><li><b>Odhad:</b> ostatné <a href="http://www.nrsr.sk/web/Dynamic/DownloadSslpZip.aspx?MasterId=11020&amp;section=3_citanie&amp;WFTID=#Príloha tlac 1555 c. 4">programy zo zákona</a> delíme podľa rozpočtu 2026, prípadne 2025 alebo celej kapitoly; riadky Plánu obnovy vynechávame. Programy, ktoré miešajú oblasti, dali v roku 2026 mimo svojej hlavnej oblasti ≈ 2,16 € zo stovky; práve toto rozdelenie je odhad.</li><li><b>Test:</b> rovnaký postup na roku 2026 sa mýlil priemerne o 0,11 € na dlaždicu, najviac o 0,58 €.</li><li>Keď ministerstvo zverejní skutočné rozdelenie, odhad sa pri mesačnej obnove nahradí.</li></ul></details>
   <p class="desc">Vygenerované 18. 10. 2026.</p>
   <a class="parent-link" href="https://www.zltastopa.sk" target="_blank" rel="noopener">Projekt Žltá Stopa ↗</a>
 </footer>
@@ -630,7 +630,7 @@ footer details:last-of-type { border-bottom:1px solid var(--grid); margin-bottom
     yearsBox.querySelectorAll("button").forEach(b => {
       const y = +b.dataset.year, on = y === state.year, ok = available(y, state.measure);
       b.disabled = !ok;
-      b.title = ok ? "" : "Skutočnosť za bežný rok ešte nie je uzavretá";
+      b.title = ok ? "" : "Skutočnosť za tento rok nie je k dispozícii.";
       b.setAttribute("aria-checked", on); b.tabIndex = on ? 0 : -1;
       if (on) b.scrollIntoView({ block: "nearest", inline: "center" });
     });

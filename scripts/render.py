@@ -69,7 +69,8 @@ def main() -> None:
             f"nemocniciam alebo odvod do EÚ (<a href=\"data/navrh_polozky.csv\">zoznam so zdrojmi</a>).</li>"
             f"<li><b>Odhad:</b> ostatné <a href=\"{esc(x['zdroj_programy'])}\">programy zo zákona</a> delíme podľa rozpočtu "
             f"{x['zaklad'][0]}{', prípadne ' + str(x['zaklad'][1]) if len(x['zaklad']) > 1 else ''} alebo celej kapitoly; "
-            f"riadky Plánu obnovy vynechávame. Programy, ktoré miešajú oblasti, tvoria ≈ {mixed} € zo stovky.</li>"
+            f"riadky Plánu obnovy vynechávame. Programy, ktoré miešajú oblasti, dali v roku {x['zaklad'][0]} mimo svojej "
+            f"hlavnej oblasti ≈ {mixed} € zo stovky; práve toto rozdelenie je odhad.</li>"
             + (f"<li><b>Test:</b> rovnaký postup na roku {bt['rok']} sa mýlil priemerne o {sk_num(bt['priemerna_chyba'])} € "
                f"na dlaždicu, najviac o {sk_num(bt['max_chyba'])} €.</li>" if bt else "")
             + "<li>Keď ministerstvo zverejní skutočné rozdelenie, odhad sa pri mesačnej obnove nahradí.</li></ul></details>")

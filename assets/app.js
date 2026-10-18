@@ -42,22 +42,12 @@
   const isEst = (y, m = "schvaleny") => !!((D.years[y] || {})[m] || {}).estimate;
   const state = { year: YEARS.filter(y => !isEst(y)).pop(), measure: "schvaleny" };
   function available(y, m) { return !!(D.years[y] && D.years[y][m]); }
-  const EST_LINE = "Celkové sumy aj Sociálna poisťovňa sú zo schválených rozpočtov; rozdelenie výdavkov štátu do oblastí je odhad.";
+  const EST_LINE = "Súčty sú presné, rozdelenie do oblastí čiastočne odhadujeme.";
+  // one or two sentences; the full method is in the collapsed "Rok … odhad" methodology block
   function estText(y) {
-    const e = D.years[y].schvaleny, x = e.estimate, bt = x.backtest;
-    const top = (x.neiste_programy || []).slice(0, 3).map(p => {
-      const [a, b] = Object.keys(p.podiely);
-      return `„${p.nazov}“ (${p.kapitola}: ${TILE[a].short} alebo ${TILE[b].short})`;
-    });
-    return `Rok ${y}: celkové výdavky a príjmy štátu sú zo zákona a Sociálna poisťovňa z jej schváleného rozpočtu. `
-      + `Rozdelenie výdavkov štátu podľa oblastí ministerstvo zatiaľ nezverejnilo, preto ho skladáme: sumy, ktorých účel `
-      + `uvádza hlavná kniha rozpočtu (napríklad transfer vojenským nemocniciam či odvod do EÚ), dávame priamo do ich dlaždice; `
-      + `ostatné programy z prílohy zákona rozdelíme tak, ako sa ten istý program delil v rozpočte na rok ${x.zaklad[0]} `
-      + `(prípadne ${x.zaklad[1]}). Väčšina programov išla celá do jednej oblasti; pri tých, ktoré miešajú viac oblastí, `
-      + `išlo vtedy mimo ich hlavnej oblasti spolu asi ${eur(100 * x.neiste / e.total)} zo stovky a práve toto rozdelenie odhadujeme`
-      + (top.length ? `, najmä v programoch ${top.join(", ")}.` : ".")
-      + (bt ? ` Keď sme rovnakým postupom odhadli rok ${bt.rok}, dlaždice sa od skutočnosti líšili v priemere o ${eur(bt.priemerna_chyba)} `
-        + `zo stovky, najviac o ${eur(bt.max_chyba)} pri dlaždici ${TILE[bt.max_dlazdica].short}. Je to chyba v minulosti, nie záruka presnosti odhadu.` : "");
+    const e = D.years[y].schvaleny, x = e.estimate;
+    return `Rok ${y}: súčty sú zo schváleného rozpočtu. Oficiálne rozdelenie do oblastí ešte nie je, skladáme ho z hlavnej knihy `
+      + `rozpočtu; pri programoch, ktoré miešajú oblasti (≈ ${eur(100 * x.neiste / e.total)} zo stovky), preberáme rozdelenie z roku ${x.zaklad[0]}.`;
   }
   function readHash() {
     const m = location.hash.match(/^#(\d{4})(?:-(schvaleny|skutocnost))?$/);
@@ -193,8 +183,7 @@
       + `<div class="meta">${approx}${mil(t.v)} · ${pct(share(t.v, e))} výdavkov štátu a Sociálnej poisťovne · ${esc(g.name)}</div>`
       + (t.c.length > 1 || childIdx != null ? `<div class="rows">${rows}</div>` : "")
       + (kap ? `<div class="h">Kto to platí${est ? " (odhad)" : ""}</div>${kap}` : "")
-      + both + yoy + (est ? `<div class="note">${EST_LINE} Odhad podľa súm programov z prílohy zákona a ich rozdelenia v roku ${e.estimate.zaklad[0]}`
-        + (e.estimate.backtest ? `; v spätnom teste na roku ${e.estimate.backtest.rok} sa dlaždica mýlila priemerne o ${eur(e.estimate.backtest.priemerna_chyba)}.` : ".") + `</div>` : "")
+      + both + yoy + (est ? `<div class="note">${EST_LINE}</div>` : "")
       + (meta.note ? `<div class="note">${esc(meta.note)}</div>` : "") + ev;
   }
 
@@ -326,6 +315,11 @@
     ev.preventDefault();
     all[(i + (ev.key === "ArrowRight" ? 1 : all.length - 1)) % all.length].focus();
   });
+  // "Ako?" in the 2027 note opens the collapsed methodology block (without touching the #year hash)
+  $("event").addEventListener("click", ev => {
+    const a = ev.target.closest('a[href="#odhad"]'), d = $("odhad"); if (!a || !d) return;
+    ev.preventDefault(); d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
   $("small").addEventListener("click", ev => {
     const b = ev.target.closest("button[data-id]"); if (!b) return;
     const r = b.getBoundingClientRect();
@@ -342,29 +336,27 @@
   function drawText() {
     const e = entry(), y = state.year, meas = MEASURE_LABEL[state.measure];
     $("ctitle").textContent = `Kam ide stovka zo štátnej kasy ${y}${e.estimate ? " (odhad)" : ""}`;
-    $("csub").innerHTML = `Štátna kasa = štátny rozpočet a Sociálna poisťovňa spolu (bez zdravotných poisťovní, obcí a krajov).<br>100 € = <b>${mil(e.total)}</b> výdavkov (${meas}) · plocha dlaždice = podiel zo stovky`
+    $("csub").innerHTML = `Štátna kasa = štátny rozpočet a Sociálna poisťovňa spolu (bez zdravotných poisťovní, obcí a krajov).<br>100 € = <b>${mld(e.total)}</b> výdavkov (${meas}) · detail ukáže klik na dlaždicu`
       + (e.provisional ? `<span class="prov" title="Pred schválením záverečného účtu sa údaje ešte môžu spresniť.">predbežné</span>` : "")
-      + (e.estimate ? `<span class="prov est">odhad rozdelenia</span><br><b>${EST_LINE}</b>` : "");
+      + (e.estimate ? `<span class="prov est">odhad rozdelenia</span>` : "");
     const ev = $("event");
     const notes = [e.estimate ? estText(y) : null, D.events[y] ? `Rok ${y}: ${D.events[y]}` : null].filter(Boolean);
     ev.hidden = !notes.length;
     ev.classList.toggle("est", !!e.estimate);
-    ev.textContent = notes.join(" ");
+    ev.innerHTML = esc(notes.join(" ")) + (e.estimate ? ` <a href="#odhad">Ako?</a>` : "");
     // KPIs
     // deficit: the state budget's own cash balance, expressed per 100 € of the displayed spending
     // (it is not a combined balance of the state and Sociálna poisťovňa)
     const stateGap = e.revenue == null ? null : e.state_total - e.revenue;
     const gap = stateGap == null ? null : 100 * stateGap / e.total;
-    const top = Object.entries(e.tiles).sort((a, b) => b[1].v - a[1].v)[0];
     const prevE = entry(y - 1);
     const growth = prevE ? 100 * (e.total / prevE.total - 1) : null;
     $("kpis").innerHTML =
-      `<div class="kpi"><div class="n">${mld(e.total)}</div><div class="l">výdavky štátu a Sociálnej poisťovne ${y} (${meas})${growth == null ? "" : `, ${growth >= 0 ? "+" : "−"}${pct(Math.abs(growth))} oproti ${y - 1}`}</div></div>`
-      + `<div class="kpi"><div class="n">${mld(e.sp_total - e.sp_internal)}</div><div class="l">z toho Sociálna poisťovňa; štátny rozpočet ${mld(e.state_total - e.transfer)} bez transferu ${mld(e.transfer)} do nej (ten by bol započítaný dvakrát)</div></div>`
+      `<div class="kpi"><div class="n">${mld(e.total)}</div><div class="l">výdavky štátnej kasy ${y}${growth == null ? "" : `, ${growth >= 0 ? "+" : "−"}${pct(Math.abs(growth))} oproti ${y - 1}`}</div></div>`
+      + `<div class="kpi" title="Štátny rozpočet ${mld(e.state_total - e.transfer)} bez transferu ${mld(e.transfer)} do Sociálnej poisťovne (ten by bol započítaný dvakrát)."><div class="n">${mld(e.sp_total - e.sp_internal)}</div><div class="l">z toho Sociálna poisťovňa</div></div>`
       + (gap == null ? `<div class="kpi"><div class="n">–</div><div class="l">bilancia nie je k dispozícii</div></div>`
-        : gap >= 0 ? `<div class="kpi"><div class="n">${eur(gap)}</div><div class="l">schodok štátneho rozpočtu (${mld(stateGap)}) na každých 100 € zobrazených výdavkov; nie je to spoločný schodok štátu a Sociálnej poisťovne</div></div>`
-          : `<div class="kpi"><div class="n">${eur(-gap)}</div><div class="l">prebytok štátneho rozpočtu (${mld(-stateGap)}) na každých 100 € zobrazených výdavkov</div></div>`)
-      + `<div class="kpi"><div class="n">${eur(share(top[1].v, e))}</div><div class="l">najväčšia dlaždica: ${esc(TILE[top[0]].name)}</div></div>`;
+        : gap >= 0 ? `<div class="kpi" title="Schodok štátneho rozpočtu ${mld(stateGap)}; nie je to spoločný schodok štátu a Sociálnej poisťovne."><div class="n">${eur(gap)}</div><div class="l">schodok štátu na každých 100 €</div></div>`
+          : `<div class="kpi" title="Prebytok štátneho rozpočtu ${mld(-stateGap)}."><div class="n">${eur(-gap)}</div><div class="l">prebytok štátu na každých 100 €</div></div>`);
     // legend
     $("legend").innerHTML = groupSums(e).map(({ g, v }) => `<span><span class="sw" style="background:${g.color}"></span>${esc(g.name)}<b>${eur(share(v, e))}</b></span>`).join("");
     // table
@@ -648,7 +640,7 @@
     const meas = MEASURE_LABEL[state.measure], e = entry();
     if (which === "tm") return {
       title: `Kam ide stovka zo štátnej kasy ${state.year}${e.estimate ? " (odhad)" : ""}`,
-      sub: `100 € = ${mil(e.total)} výdavkov (${meas}${e.provisional ? ", predbežné údaje" : ""}${e.estimate ? "; rozdelenie do oblastí je odhad" : ""})`,
+      sub: `100 € = ${mld(e.total)} výdavkov (${meas}${e.provisional ? ", predbežné údaje" : ""}${e.estimate ? "; rozdelenie do oblastí je odhad" : ""})`,
       legend: true,
       extra: [e.estimate ? EST_LINE + " " + estText(state.year) : "", $("small").textContent].concat(D.footnoted.filter(id => e.tiles[id])
         .map(id => `${SUP[FOOT[id]]} ${TILE[id].name}: ${TILE[id].note}`)).filter(Boolean)

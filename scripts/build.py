@@ -53,9 +53,8 @@ GROUPS = [
 # id, group, full name, short label for the tile (None = same), footnote
 TILES = [
     ("dochodky", "soc", "Dôchodky", None,
-     "Dôchodky vypláca Sociálna poisťovňa najmä z odvodov; štátny rozpočet jej posiela transfer na ich "
-     "doplatenie. Ten tu nepočítame dvakrát: v stovke je len to, čo Sociálna poisťovňa naozaj vyplatí, "
-     "plus dávky v starobe, ktoré priamo platia ministerstvá."),
+     "Čo Sociálna poisťovňa naozaj vyplatí, plus dávky v starobe od ministerstiev. Transfer štátu "
+     "do poisťovne nerátame dvakrát."),
     ("davky", "soc", "Dávky a sociálna pomoc", "Dávky",
      "Nemocenské a materské dávky, dávka v nezamestnanosti, prídavky na deti, rodičovský príspevok, "
      "príspevky na kompenzáciu ťažkého zdravotného postihnutia, pomoc v hmotnej núdzi a správa "
@@ -65,9 +64,8 @@ TILES = [
     ("skolstvo", "ludia", "Školstvo", None,
      "Vzdelávanie za všetky kapitoly (COFOG 09), bez výskumu a vývoja v oblasti vzdelávania."),
     ("zdravie", "ludia", "Zdravotníctvo", None,
-     "Vrátane platieb za poistencov štátu, ktoré Ministerstvo zdravotníctva posiela zdravotným "
-     "poisťovniam (od roku 2013 ich MF účtuje v sociálnom zabezpečení, predtým v zdravotníctve). "
-     "Väčšinu zdravotnej starostlivosti platia zdravotné poisťovne z odvodov, mimo štátneho rozpočtu."),
+     "Vrátane platieb štátu za svojich poistencov. Väčšinu zdravotníctva platia zdravotné poisťovne, "
+     "tie v stovke nie sú."),
     ("veda", "ludia", "Veda a výskum", None,
      "Základný výskum a výskum a vývoj vo všetkých oblastiach (všetky výskumné kódy COFOG)."),
     ("kultura", "ludia", "Kultúra, šport a médiá", "Kultúra a šport", None),
@@ -83,15 +81,12 @@ TILES = [
     ("obrana", "bezp", "Obrana", None, "COFOG 02 za všetky kapitoly, bez výskumu a vývoja."),
     ("policia", "bezp", "Polícia, hasiči a justícia", None, None),
     ("dlh", "stat", "Obsluha štátneho dlhu", None,
-     "Úroky a ďalšie náklady štátneho dlhu. Od roku 2012 ich Všeobecná pokladničná správa "
-     "posiela ako transfer organizácii, ktorá dlh spravuje (program „Dlhová služba“); úroky "
-     "zaplatené v danom roku sa preto môžu od tejto sumy líšiť."),
+     "Úroky a náklady dlhu. Od roku 2012 je to transfer správcovi dlhu, nie priamo zaplatené úroky."),
     ("eu", "stat", "Odvod do rozpočtu EÚ", "Odvod do EÚ",
      "Príspevok Slovenska do spoločného rozpočtu Európskej únie (Všeobecná pokladničná správa)."),
     ("vps", "stat", "Finančné a rozpočtové záležitosti VPS (vrátane rezerv)", "Financie VPS vrátane rezerv",
-     "Finančné a rozpočtové záležitosti Všeobecnej pokladničnej správy. V schválenom rozpočte sú tu "
-     "najmä rozpočtové rezervy a prostriedky, ktoré sa počas roka presúvajú na ministerstvá, preto je "
-     "táto dlaždica pri skutočnom čerpaní zvyčajne oveľa menšia."),
+     "Najmä rezervy a peniaze, ktoré sa počas roka presunú na ministerstvá. V skutočnom čerpaní býva "
+     "oveľa menšia."),
     ("sprava", "stat", "Všeobecné verejné služby", "Verejné služby",
      "Parlament, vláda, ministerstvá, zahraničné vzťahy, štatistika, finančná správa a ďalšie "
      "všeobecné služby (COFOG 01 bez dlhu, odvodu do EÚ, výskumu a financií VPS)."),
@@ -228,8 +223,7 @@ NO_YOY = {
 # Documented events / classification notes shown as annotations.
 EVENTS = {
     2009: "Slovensko prijalo euro. Sumy za roky 2005 až 2008 sú prepočítané konverzným kurzom 30,1260 Sk/€.",
-    2013: "Platby za poistencov štátu sa od roku 2013 účtujú v sociálnom zabezpečení (predtým v "
-          "zdravotníctve). Tu sú v oboch prípadoch v dlaždici Zdravotníctvo, takže porovnanie platí.",
+    2013: "Platby za poistencov štátu sa odvtedy účtujú inde; tu sú stále v Zdravotníctve, porovnanie platí.",
     2020: "Pandémia covid-19. Schválený rozpočet bol počas roka novelizovaný.",
 }
 # Years of the energy crisis: the note quotes the energy spending computed from the data.
@@ -647,8 +641,7 @@ def main() -> None:
         if energy:
             label = "skutočné čerpanie" if m == "skutocnost" else "schválený rozpočet"
             amount = f"{energy / 1e9:.2f}".replace(".", ",")
-            events[str(y)] = (f"Energetická kríza: výdavky na energetiku (COFOG 043, v dlaždici Priemysel, "
-                              f"energetika a ostatné) dosiahli {amount} mld. € ({label}).")
+            events[str(y)] = f"Energetická kríza: na energetiku išlo {amount} mld. € ({label})."
 
     out = {
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),

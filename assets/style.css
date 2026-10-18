@@ -11,12 +11,10 @@ a { color:var(--accent); }
 header h1 { font-size:40px; margin:0 0 2px; letter-spacing:-.025em; line-height:1.15; }
 .tagline { font-size:19px; font-weight:600; margin:0 0 10px; }
 header p.sub { color:var(--muted); margin:0 0 10px; max-width:72ch; }
-header p.scope, p.dlh-note { margin:0 0 6px; max-width:72ch; font-size:14px; color:#3d4555;
-                 background:#fff8dc; border-left:4px solid var(--yellow); padding:9px 12px; border-radius:0 8px 8px 0; }
 
-.kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:22px 0 22px; }
+.kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:14px 0 4px; }
 .kpi { background:#fff; border:1px solid var(--grid); border-radius:12px; padding:14px 16px 12px; }
-.kpi .n { font-size:24px; font-weight:700; letter-spacing:-.01em; font-variant-numeric:tabular-nums; }
+.kpi .n { font-size:24px; font-weight:700; letter-spacing:-.01em; font-variant-numeric:tabular-nums; white-space:nowrap; }
 .kpi .l { color:var(--muted); font-size:13px; margin-top:2px; line-height:1.4; }
 
 .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
@@ -108,13 +106,19 @@ tr.grp td { font-weight:700; background:#fafbfd; }
 footer { color:#3d4555; font-size:13.5px; line-height:1.65; }
 footer code { background:#eef1f7; padding:1px 5px; border-radius:4px; font-size:11.5px; word-break:break-all; }
 footer .parent-link { display:inline-block; margin-top:6px; font-weight:600; }
+footer details { border-top:1px solid var(--grid); padding:6px 0; }
+footer details summary { cursor:pointer; font-weight:600; color:var(--accent); padding:2px 0; }
+footer details ul { margin:6px 0 4px; padding-left:20px; }
+footer details li { margin:3px 0; }
+footer details:last-of-type { border-bottom:1px solid var(--grid); margin-bottom:10px; }
 
 @media (max-width:720px) {
   .wrap { padding:20px 12px 60px; }
   header h1 { font-size:31px; }
   .tagline { font-size:17px; }
-  .kpis { grid-template-columns:repeat(2,1fr); gap:10px; }
-  .kpi .n { font-size:20px; }
+  .kpis { grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .kpi { padding:10px 10px 8px; }
+  .kpi .n { font-size:17px; }
   section, footer { padding:16px 14px 12px; }
   .ctitle { font-size:20px !important; }
   .years { flex-basis:100%; }

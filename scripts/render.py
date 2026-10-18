@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render index.html: "Kam ide stovka" – the Slovak state budget shrunk to 100 €.
+"""Render index.html: "Na čo míňa štát?" – the Slovak state budget shrunk to 100 €.
 
 Reads data/stovka.json (written by build.py) and the Žltá Stopa badge, and
 writes one self-contained page (data, CSS, JS inlined; no external requests).
@@ -53,38 +53,30 @@ def main() -> None:
     est_years = [y for y in years if DATA["years"][y].get("schvaleny", {}).get("estimate")]
     real_years = [y for y in years if y not in est_years]
     last = real_years[-1] + (f" (a odhad {', '.join(est_years)})" if est_years else "")
-    sk_eur = lambda v: f"{v / 1e9:.2f}".replace(".", ",") + " mld. €"
     sk_num = lambda v: f"{v:.2f}".replace(".", ",")
-    # An estimated year: what is exact, what is estimated, how, and how well it worked before.
+    # An estimated year: short bullets for the collapsed methodology block (README has the long version).
     next_year_note = ""
     for y in est_years:
-        x = DATA["years"][y]["schvaleny"]["estimate"]
+        e = DATA["years"][y]["schvaleny"]
+        x = e["estimate"]
         bt = x.get("backtest")
-        levels = "; ".join(f"{lv['popis']}: {sk_eur(lv['suma'])}" for lv in x["levels"] if lv["suma"])
+        mixed = sk_num(100 * x["neiste"] / e["total"])
         next_year_note += (
-            f"<p><b>Rok {y} je čiastočne odhad.</b> Celkové výdavky a príjmy štátu sú zo schváleného zákona o štátnom rozpočte "
-            f"na rok {y} (<a href=\"{esc(x['zdroj_bilancia'])}\">príloha č. 1</a>) a výdavky Sociálnej poisťovne z jej "
-            f"schváleného rozpočtu ({esc(x['sp_schvalenie'])}; <a href=\"{esc(x['zdroj_sp'])}\">rozpočet po riadkoch</a>, "
-            f"bez finančných operácií); transfer zo štátu do nej je v oboch dokumentoch rovnaký. Rozdelenie výdavkov štátu "
-            f"podľa funkčnej klasifikácie ministerstvo zatiaľ nezverejnilo, preto ho odhadujeme. Sumy všetkých programov a "
-            f"vybraných podprogramov sú z prílohy č. 4 schváleného zákona (<a href=\"{esc(x['zdroj_programy'])}\">výdavky "
-            f"na programy vlády</a>), skupiny výdavkov Všeobecnej pokladničnej správy vrátane odvodu do EÚ "
-            f"z hlavnej knihy rozpočtu (tabuľky 116 a 118); každý program sme rozdelili do dlaždíc podľa toho, ako sa ten istý "
-            f"program delil v schválenom rozpočte na rok {x['zaklad'][0]} (údaje po riadkoch z rozpocet.sk). "
-            f"Ak MF v zozname programov uvádza názov, program sa prevezme len pri zhode názvu; pri "
-            f"{sk_eur(x['bez_overenia_nazvu'])} (programy, pri ktorých zoznam MF uvádza len podprogramy, napr. "
-            f"Program Slovensko či Strategický plán SPP) sa dala overiť len zhoda kódu. Použité úrovne: {levels}. "
-            + (f"Spätný test: rovnakým postupom odhadnutý rok {bt['rok']} sa od skutočného rozdelenia líšil v priemere o "
-               f"{sk_num(bt['priemerna_chyba'])} € zo stovky na dlaždicu (najviac {sk_num(bt['max_chyba'])} €) a o "
-               f"{sk_num(bt['priemerna_chyba_polozky'])} € na položku (najviac {sk_num(bt['max_chyba_polozky'])} €). "
-               "Je to chyba v minulosti, nie záruka presnosti odhadu. " if bt else "")
-            + "Aj rozdelenie dlaždíc medzi kapitoly je odhadnuté. Keď ministerstvo zverejní skutočné rozdelenie, "
-            "odhad sa pri najbližšej mesačnej obnove dát automaticky nahradí.</p>")
+            f"<details id=\"odhad\"><summary>Rok {y}: čo je presné a čo odhad</summary><ul>"
+            f"<li><b>Presné:</b> celkové výdavky a príjmy štátu (<a href=\"{esc(x['zdroj_bilancia'])}\">zákon, príloha č. 1</a>), "
+            f"Sociálna poisťovňa (<a href=\"{esc(x['zdroj_sp'])}\">schválený rozpočet</a>) a transfer medzi nimi.</li>"
+            f"<li><b>Presné:</b> sumy, ktorých účel uvádza hlavná kniha rozpočtu, napríklad 560 + 50 mil. € vojenským "
+            f"nemocniciam alebo odvod do EÚ (<a href=\"data/navrh_polozky.csv\">zoznam so zdrojmi</a>).</li>"
+            f"<li><b>Odhad:</b> ostatné <a href=\"{esc(x['zdroj_programy'])}\">programy zo zákona</a> delíme ako v rozpočte "
+            f"{x['zaklad'][0]}, bez Plánu obnovy, ktorý končí. Programy, ktoré miešajú oblasti, dali vtedy mimo hlavnej "
+            f"oblasti ≈ {mixed} € zo stovky.</li>"
+            + (f"<li><b>Test:</b> rovnaký postup na roku {bt['rok']} sa mýlil priemerne o {sk_num(bt['priemerna_chyba'])} € "
+               f"na dlaždicu, najviac o {sk_num(bt['max_chyba'])} €.</li>" if bt else "")
+            + "<li>Keď ministerstvo zverejní skutočné rozdelenie, odhad sa pri mesačnej obnove nahradí.</li></ul></details>")
     next_year = int(years[-1]) + 1
     if str(next_year) not in DATA["years"] and not est_years:
-        next_year_note += (f"<p><b>Rok {next_year}:</b> zatiaľ chýba. Doplní sa pri mesačnej obnove dát, keď budú "
-                           f"k dispozícii rozpočet štátu aj Sociálnej poisťovne na rok {next_year} (bez oboch by stovka "
-                           "nebola celá).</p>")
+        next_year_note += (f"<details><summary>Rok {next_year}</summary><ul><li>Doplní sa, keď budú zverejnené rozpočty "
+                           f"štátu aj Sociálnej poisťovne na rok {next_year}.</li></ul></details>")
     payload = json.dumps({**DATA, "footnoted": FOOTNOTED, "site": SITE}, ensure_ascii=False,
                          separators=(",", ":")).replace("</", "<\\/")
 
@@ -93,9 +85,9 @@ def main() -> None:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kam ide stovka zo štátnej kasy | Projekt Žltá Stopa</title>
+<title>Na čo míňa štát? Štátna kasa ako jedna stovka | Projekt Žltá Stopa</title>
 <meta name="description" content="Na čo ide každých 100 € zo štátnej kasy Slovenska, teda zo štátneho rozpočtu a Sociálnej poisťovne? Interaktívne, za roky {first} až {last}, z otvorených dát Ministerstva financií SR. Projekt Žltá Stopa.">
-<meta property="og:title" content="Kam ide stovka zo štátnej kasy | Projekt Žltá Stopa">
+<meta property="og:title" content="Na čo míňa štát? Štátna kasa ako jedna stovka">
 <meta property="og:description" content="Štátny rozpočet a Sociálna poisťovňa zmenšené na 100 €. Dôchodky, dávky, školstvo, dlh, obrana… za roky {first} až {last}.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://{SITE}/">
@@ -107,23 +99,14 @@ def main() -> None:
 <div class="wrap">
 <header>
   <div class="brandbar">
-    <h1>Kam ide stovka</h1>
+    <h1>Na čo míňa štát?</h1>
     <a class="badge" href="https://www.zltastopa.sk" target="_blank" rel="noopener" aria-label="Projekt Žltá Stopa">
       <img src="{BADGE}" alt="Projekt Žltá Stopa" width="118" height="38">
     </a>
   </div>
-  <p class="tagline">Štátna kasa Slovenska zmenšená na 100&nbsp;€</p>
-  <p class="sub">Keby štát minul namiesto miliárd len jednu stovku, koľko by išlo na dôchodky, školy,
-    dávky, armádu či úroky z dlhu? Každá dlaždica predstavuje podiel na výdavkoch, za roky {first} až {last}.
-    Keď na dlaždicu prejdeš kurzorom alebo na ňu ťukneš, uvidíš, z čoho sa skladá a kto ju platí.</p>
-  <p class="scope"><b>Čo je v štátnej kase:</b> štátny rozpočet (súčet kapitol zo zákona o štátnom rozpočte) a
-    Sociálna poisťovňa, ktorá na Slovensku vypláca dôchodky a ďalšie dávky z odvodov. V Česku sú dôchodky
-    priamo v štátnom rozpočte, u nás ich bez Sociálnej poisťovne nevidno. Peniaze, ktoré štát Sociálnej
-    poisťovni posiela, počítame len raz, tam, kde ich vyplatí. <b>Mimo stovky</b> sú zdravotné poisťovne
-    (ako v Česku), obce a kraje. Je to rozdelenie výdavkov, nie toho, kam idú dane jedného človeka.</p>
+  <p class="tagline">Keby bola celá štátna kasa jedna stovka</p>
+  <p class="sub">Koľko z nej ide na dôchodky, školy, dávky, armádu či úroky z dlhu? Roky {first} až {last}.</p>
 </header>
-
-<div class="kpis" id="kpis" aria-live="polite"></div>
 
 <section class="main-chart">
   <div class="controls">
@@ -138,6 +121,7 @@ def main() -> None:
   <div class="tm" id="tm"></div>
   <div class="legend" id="legend"></div>
   <p class="small-tiles" id="small"></p>
+  <div class="kpis" id="kpis" aria-live="polite"></div>
   <p class="event" id="event" hidden></p>
   <ol class="foot" id="foot">{footnotes}</ol>
   <div class="chart-tools" data-chart="tm"><button class="ct" data-act="copy" type="button">Kopírovať obrázok</button><button class="ct" data-act="download" type="button">Stiahnuť PNG</button></div>
@@ -146,68 +130,54 @@ def main() -> None:
 
 <section>
   <h2>Stovka v čase</h2>
-  <p class="desc">Každý stĺpec je jeden rok rozdelený na 100&nbsp;€. Všetky stĺpce majú rovnakú výšku,
-    ukazujú teda <b>podiely</b>, nie rast výdavkov (ten je v popise pod rokom). Klikni na stĺpec a hore sa zobrazí
-    daný rok. V schválených rozpočtoch 2020 až 2023 je vidno veľký pás „Financie VPS vrátane rezerv“:
-    peniaze, ktoré sa počas roka presunuli na ministerstvá.</p>
+  <p class="desc">Každý stĺpec je jeden rok rozdelený na 100&nbsp;€, ukazuje podiely, nie rast výdavkov.
+    Klik na stĺpec zobrazí ten rok hore.</p>
   <div class="tc-scroll"><div id="tc"></div></div>
   <div class="chart-tools" data-chart="tc"><button class="ct" data-act="copy" type="button">Kopírovať obrázok</button><button class="ct" data-act="download" type="button">Stiahnuť PNG</button></div>
 </section>
 
 <section>
   <h2>Obsluha štátneho dlhu v čase</h2>
-  <p class="desc">Hore koľko štát v danom roku dal na obsluhu dlhu v miliardách eur (bežné ceny, bez
-    očistenia o infláciu), dole koľko je to zo stovky. Typ údajov sa riadi prepínačom hore.</p>
-  <p class="scope dlh-note"><b>Pozor:</b> je to výdavok štátneho rozpočtu na obsluhu dlhu. Do roku 2011 ním štát
-    platil úroky priamo, od roku 2012 je to transfer organizácii, ktorá dlh spravuje, a tá z neho úroky platí. Úroky
-    zaplatené v danom roku sa preto môžu od tejto sumy líšiť. Výrazne to vidno v rokoch 2020 a 2021, keď štát skutočne
-    poslal len 0,80 a 0,66 mld.&nbsp;€ zo schválených 1,16 a 1,11 mld.&nbsp;€.</p>
+  <p class="desc">Hore v miliardách eur, dole zo stovky.
+    Od roku 2012 je to transfer správcovi dlhu, nie priamo zaplatené úroky; v rokoch 2020 a 2021 štát
+    poslal výrazne menej, než schválil.</p>
   <div class="tc-scroll"><div id="dc"></div></div>
   <div class="chart-tools" data-chart="dc"><button class="ct" data-act="copy" type="button">Kopírovať obrázok</button><button class="ct" data-act="download" type="button">Stiahnuť PNG</button></div>
 </section>
 
 <footer>
   <h2>Metodika a zdroje</h2>
-  <p><b>Zdroj:</b> {esc(src['name'])}. Výdavky každej kapitoly štátneho rozpočtu podľa funkčnej
-    klasifikácie (COFOG) z verejného Open Data API (<code>{esc(src['fnc'])}</code>); výdavky Sociálnej
-    poisťovne podľa ekonomickej klasifikácie a pre vybrané položky štátu aj prienik s ekonomickou
-    klasifikáciou (<code>…/polozkyRozpocetuVSOrg/…</code>), ktorý používa samotný portál rozpocet.sk.
-    Stiahnuté {sk_date(src['retrieved_from'])} až {sk_date(src['retrieved_to'])}.</p>
-  <p><b>Hranica:</b> stovka = výdavky štátneho rozpočtu (súčet kapitol, pre rok 2026 presne
-    32&nbsp;899&nbsp;667&nbsp;683&nbsp;€ ako v zákone č.&nbsp;303/2025 Z.&nbsp;z.) + výdavky Sociálnej poisťovne
-    − transfer zo štátneho rozpočtu do Sociálnej poisťovne (Všeobecná pokladničná správa, položka 641003;
-    v roku 2026 2,34 mld.&nbsp;€, rovnako ako príjem Sociálnej poisťovne „transfer zo ŠR“) − presuny medzi
-    vlastnými fondmi Sociálnej poisťovne (jej položka 641003, v schválených rozpočtoch vždy nula).
-    Pri roku 2023 sa výdavky Sociálnej poisťovne po tomto odpočte (11,92 mld.&nbsp;€) líšia od jej vlastnej
-    Správy o hospodárení (11,95 mld.&nbsp;€) o 34 mil.&nbsp;€, ktoré nevieme vysvetliť; je to približná kontrola,
-    nie úplné zosúladenie. Odvody, ktoré štát platí ako zamestnávateľ, sa neodpočítavajú (podobne ako v
-    európskej metodike, kde nejde o transfer). Všetky kapitoly a roky sú skontrolované, či neposielajú do
-    Sociálnej poisťovne ďalšie transfery; päť drobných jednorazových prípadov (spolu menej ako 0,3 mil.&nbsp;€)
-    nemá v dátach uvedeného príjemcu a ponechávame ich ako výdavok štátu. Súhrn „Štátny rozpočet“ z API
-    nepoužívame, lebo pridáva aj účty ako Štátny dlh a niektoré peniaze počíta dvakrát (raz ako transfer z
-    kapitoly, raz ako výdavok príjemcu). <b>Schválený rozpočet</b> je rozpočet podľa zákona o štátnom rozpočte
-    vrátane jeho prípadných noviel počas roka (napríklad v roku 2020 sa výdavky novelou zvýšili z
-    18,56 na 26,32 mld.&nbsp;€), tak ako ho vedie ministerstvo. <b>Skutočnosť</b> je skutočné čerpanie;
-    konečná je po schválení štátneho záverečného účtu (naposledy za rok {DATA['final_account_through']}),
-    za neskoršie uzavreté roky je označená ako predbežná a za bežný rok sa nezobrazuje, lebo je neúplná.
-    Sumy pred rokom 2009 sú prepočítané z korún kurzom 30,1260&nbsp;Sk/€, tak ako ich zverejňuje ministerstvo.</p>
-  <p><b>Dlaždice:</b> každé euro je priradené práve raz, podľa pravidiel v poradí: (1) platby
-    Ministerstva zdravotníctva za poistencov štátu (ekonomická položka 642031) idú do Zdravotníctva,
-    hoci ich MF od roku 2013 vedie v sociálnom zabezpečení; odvod do rozpočtu EÚ (649005) zo Všeobecnej
-    pokladničnej správy má vlastnú dlaždicu; finančné a rozpočtové záležitosti VPS (vrátane rezerv) tiež;
-    (2) všetok výskum a vývoj ide do Vedy a výskumu; (3) zvyšok štátu podľa skupín COFOG. Sociálna
-    poisťovňa podľa ekonomickej klasifikácie (jej rozdelenie podľa COFOG v schválených rozpočtoch 2006 až
-    2008 chýba): dôchodky zo starobného a invalidného poistenia (vrátane pozostalostných) do Dôchodkov,
-    nemocenské, materské, úrazové dávky, dávka v nezamestnanosti a správa poisťovne do Dávok.
-    Skript skontroluje, že súčet dlaždíc sa pre každý rok a typ údajov zhoduje na euro so zverejnenými
-    celkami (štát + Sociálna poisťovňa − transfery medzi nimi); inak dáta nezverejní. Drobné rozdiely medzi dvoma
-    zdrojmi MF pri rozdelení položiek: {esc(residuals)} (zostávajú v pôvodnej dlaždici).</p>
-  {next_year_note}
-  <p><b>Dáta na stiahnutie:</b> <a href="data/stovka.json">stovka.json</a> (to, čo vidíš na stránke),
-    <a href="data/kapitola_fnc.csv">kapitola_fnc.csv</a> (každá kapitola × COFOG × rok s priradenou dlaždicou).
+  <p class="desc">Zdroj: {esc(src['name'])} (CC0), stiahnuté {sk_date(src['retrieved_to'])}.
+    Dáta: <a href="data/stovka.json">stovka.json</a>, <a href="data/kapitola_fnc.csv">kapitola_fnc.csv</a>.
     Kód: <a href="{REPO}" target="_blank" rel="noopener">github.com/zltastopa/rozpocet</a>.
-    Inšpirácia: <a href="https://www.novinky.cz/clanek/ekonomika-statni-rozpocet-v-tisicikorune-pulka-jde-na-duchody-davky-a-uroky-z-dluhu-40597265" target="_blank" rel="noopener">Novinky.cz</a>.
-    Vygenerované {sk_date(DATA['generated'])}.</p>
+    Inšpirácia: <a href="https://www.novinky.cz/clanek/ekonomika-statni-rozpocet-v-tisicikorune-pulka-jde-na-duchody-davky-a-uroky-z-dluhu-40597265" target="_blank" rel="noopener">Novinky.cz</a>.</p>
+  <details><summary>Čo je v stovke</summary><ul>
+    <li>Štátny rozpočet (súčet kapitol zo zákona, pre rok 2026 presne 32&nbsp;899&nbsp;667&nbsp;683&nbsp;€) a Sociálna poisťovňa.
+      V Česku sú dôchodky v štátnom rozpočte, u nás ich vypláca Sociálna poisťovňa, preto ju pridávame.</li>
+    <li>Transfer zo štátu do Sociálnej poisťovne (položka 641003, v roku 2026 2,34 mld.&nbsp;€) rátame raz, tam, kde sa peniaze vyplatia.</li>
+    <li>Mimo stovky sú zdravotné poisťovne, obce a kraje. Je to rozdelenie výdavkov, nie toho, kam idú dane jedného človeka.</li>
+    <li>Súhrn „Štátny rozpočet“ z API nepoužívame: pridáva účet Štátny dlh a niektoré peniaze ráta dvakrát.</li>
+    <li>Odvody, ktoré štát platí ako zamestnávateľ, ostávajú (ako v európskej metodike). Päť drobných transferov
+      bez uvedeného príjemcu (spolu menej ako 0,3 mil.&nbsp;€) ostáva výdavkom štátu.</li>
+    <li>Kontrola: v roku 2023 sa výdavky Sociálnej poisťovne po odpočte líšia od jej Správy o hospodárení o 34 mil.&nbsp;€, ktoré nevieme vysvetliť.</li>
+  </ul></details>
+  <details><summary>Schválený rozpočet a skutočnosť</summary><ul>
+    <li><b>Schválený rozpočet:</b> podľa zákona vrátane noviel počas roka (v roku 2020 z 18,56 na 26,32 mld.&nbsp;€).</li>
+    <li><b>Skutočnosť:</b> skutočné čerpanie. Konečné po štátnom záverečnom účte (naposledy {DATA['final_account_through']}),
+      neskoršie roky predbežne, bežný rok sa nezobrazuje.</li>
+    <li>Sumy pred rokom 2009 sú prepočítané kurzom 30,1260&nbsp;Sk/€.</li>
+  </ul></details>
+  <details><summary>Ako sa delí do dlaždíc</summary><ul>
+    <li>Každé euro je práve v jednej dlaždici: štát podľa funkčnej klasifikácie COFOG, Sociálna poisťovňa podľa druhu výdavku.</li>
+    <li>Výnimky: platby za poistencov štátu (642031) idú do Zdravotníctva, všetok výskum do Vedy a výskumu,
+      odvod do EÚ a financie VPS majú vlastné dlaždice.</li>
+    <li>Sociálna poisťovňa: starobné, invalidné a pozostalostné dôchodky do Dôchodkov; nemocenské, materské,
+      úrazové dávky, dávka v nezamestnanosti a správa do Dávok.</li>
+    <li>Súčet dlaždíc sa každý rok zhoduje na euro so zverejnenými celkami, inak sa dáta nezverejnia.
+      Drobné rozdiely medzi dvoma zdrojmi MF: {esc(residuals)}.</li>
+  </ul></details>
+  {next_year_note}
+  <p class="desc">Vygenerované {sk_date(DATA['generated'])}.</p>
   <a class="parent-link" href="https://www.zltastopa.sk" target="_blank" rel="noopener">Projekt Žltá Stopa ↗</a>
 </footer>
 </div>

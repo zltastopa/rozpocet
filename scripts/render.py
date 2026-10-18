@@ -122,10 +122,10 @@ def main() -> None:
   <div class="tm" id="tm"></div>
   <div class="legend" id="legend"></div>
   <p class="small-tiles" id="small"></p>
+  <div class="chart-tools" data-chart="tm"><button class="ct" data-act="copy" type="button">Kopírovať obrázok</button><button class="ct" data-act="download" type="button">Stiahnuť PNG</button></div>
   <div class="kpis" id="kpis" aria-live="polite"></div>
   <p class="event" id="event" hidden></p>
   <ol class="foot" id="foot">{footnotes}</ol>
-  <div class="chart-tools" data-chart="tm"><button class="ct" data-act="copy" type="button">Kopírovať obrázok</button><button class="ct" data-act="download" type="button">Stiahnuť PNG</button></div>
   <details class="tablebox"><summary>Tabuľka hodnôt</summary><div id="table"></div></details>
 </section>
 

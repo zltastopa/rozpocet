@@ -53,7 +53,8 @@ GROUPS = [
 # id, group, full name, short label for the tile (None = same), footnote
 TILES = [
     ("dochodky", "soc", "Dôchodky", None,
-     "Dôchodky Sociálnej poisťovne a dávky v starobe zo štátneho rozpočtu. Transfer štátu do poisťovne rátame raz."),
+     "Starobné, invalidné a pozostalostné dôchodky Sociálnej poisťovne a dávky v starobe zo štátneho rozpočtu. "
+     "Transfer štátu do poisťovne rátame raz."),
     ("davky", "soc", "Dávky a sociálna pomoc", "Dávky",
      "Nemocenské a materské dávky, dávka v nezamestnanosti, prídavky na deti, rodičovský príspevok, "
      "príspevky na kompenzáciu ťažkého zdravotného postihnutia, pomoc v hmotnej núdzi a správa "

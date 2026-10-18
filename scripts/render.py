@@ -142,14 +142,6 @@ def main() -> None:
 </section>
 
 <section>
-  <h2>Plán a skutočnosť</h2>
-  <p class="desc">O koľko štát minul viac alebo menej, než schválil (vrátane noviel). Celkový rozdiel robia najmä
-    nevyčerpané peniaze, prostriedky z minulých rokov a eurofondy. Presuny rezerv menia len rozdelenie medzi oblasťami.</p>
-  <div class="tc-scroll"><div id="pc"></div></div>
-  <div class="chart-tools" data-chart="pc"><button class="ct" data-act="copy" type="button">Kopírovať obrázok</button><button class="ct" data-act="download" type="button">Stiahnuť PNG</button></div>
-</section>
-
-<section>
   <h2>Obsluha štátneho dlhu v čase</h2>
   <p class="desc">Hore v miliardách eur, dole zo stovky.
     Od roku 2012 je to transfer správcovi dlhu, nie priamo zaplatené úroky. V rokoch 2020 a 2021 štát

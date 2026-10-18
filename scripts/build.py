@@ -53,8 +53,7 @@ GROUPS = [
 # id, group, full name, short label for the tile (None = same), footnote
 TILES = [
     ("dochodky", "soc", "Dôchodky", None,
-     "Čo Sociálna poisťovňa naozaj vyplatí, plus dávky v starobe od ministerstiev. Transfer štátu "
-     "do poisťovne nerátame dvakrát."),
+     "Dôchodky Sociálnej poisťovne a dávky v starobe zo štátneho rozpočtu. Transfer štátu do poisťovne rátame raz."),
     ("davky", "soc", "Dávky a sociálna pomoc", "Dávky",
      "Nemocenské a materské dávky, dávka v nezamestnanosti, prídavky na deti, rodičovský príspevok, "
      "príspevky na kompenzáciu ťažkého zdravotného postihnutia, pomoc v hmotnej núdzi a správa "
@@ -85,8 +84,7 @@ TILES = [
     ("eu", "stat", "Odvod do rozpočtu EÚ", "Odvod do EÚ",
      "Príspevok Slovenska do spoločného rozpočtu Európskej únie (Všeobecná pokladničná správa)."),
     ("vps", "stat", "Finančné a rozpočtové záležitosti VPS (vrátane rezerv)", "Financie VPS vrátane rezerv",
-     "Najmä rezervy a peniaze, ktoré sa počas roka presunú na ministerstvá. V skutočnom čerpaní býva "
-     "oveľa menšia."),
+     "Finančné výdavky VPS vrátane rezerv. Časť sa počas roka presúva do iných oblastí."),
     ("sprava", "stat", "Všeobecné verejné služby", "Verejné služby",
      "Parlament, vláda, ministerstvá, zahraničné vzťahy, štatistika, finančná správa a ďalšie "
      "všeobecné služby (COFOG 01 bez dlhu, odvodu do EÚ, výskumu a financií VPS)."),
@@ -215,14 +213,12 @@ FINAL_ACCOUNT_THROUGH = 2025
 # mostly unallocated reserves whose size is a budgeting choice (1,90 € in 2019 vs
 # 31,47 € zo stovky in 2020), not spending.
 NO_YOY = {
-    "vps": {"schvaleny": "Medziročnú zmenu pri tejto dlaždici v schválenom rozpočte neuvádzame: "
-                         "jej veľkosť určujú najmä nerozpísané rezervy, nie výdavky, a ich objem sa "
-                         "medzi rokmi líši podľa spôsobu zostavenia rozpočtu."},
+    "vps": {"schvaleny": "Medziročnú zmenu neuvádzame pre odlišné rozpočtovanie rezerv."},
 }
 
 # Documented events / classification notes shown as annotations.
 EVENTS = {
-    2009: "Slovensko prijalo euro. Sumy za roky 2005 až 2008 sú prepočítané konverzným kurzom 30,1260 Sk/€.",
+    2009: "Slovensko prijalo euro. Sumy pred rokom 2009 sú prepočítané kurzom 30,1260 Sk/€.",
     2013: "Platby za poistencov štátu sa odvtedy účtujú inde; tu sú stále v Zdravotníctve, porovnanie platí.",
     2020: "Pandémia covid-19. Schválený rozpočet bol počas roka novelizovaný.",
 }

@@ -31,10 +31,12 @@
   const nf2 = new Intl.NumberFormat("sk-SK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const nf1 = new Intl.NumberFormat("sk-SK", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const nf0 = new Intl.NumberFormat("sk-SK", { maximumFractionDigits: 0 });
-  const eur = x => (x > 0 && x < 0.01) ? "< 1 cent" : nf2.format(x) + " €";
-  const mil = x => nf1.format(x / 1e6) + " mil. €";
-  const mld = x => nf2.format(x / 1e9) + " mld. €";
-  const pct = x => nf1.format(x) + " %";
+  // non-breaking spaces keep the unit on the same line as the number
+  const eur = x => (x > 0 && x < 0.01) ? "< 1\u00a0cent" : nf2.format(x) + "\u00a0€";
+  const mil = x => nf1.format(x / 1e6) + "\u00a0mil.\u00a0€";
+  const mld = x => nf2.format(x / 1e9) + "\u00a0mld.\u00a0€";
+  const amt = x => Math.abs(x) >= 1e9 ? mld(x) : mil(x);
+  const pct = x => nf1.format(x) + "\u00a0%";
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
   // ---- state + URL hash (#2025-skutocnost) ----
@@ -42,13 +44,9 @@
   const isEst = (y, m = "schvaleny") => !!((D.years[y] || {})[m] || {}).estimate;
   const state = { year: YEARS.filter(y => !isEst(y)).pop(), measure: "schvaleny" };
   function available(y, m) { return !!(D.years[y] && D.years[y][m]); }
-  const EST_LINE = "Súčty sú presné, rozdelenie do oblastí čiastočne odhadujeme.";
-  // one or two sentences; the full method is in the collapsed "Rok … odhad" methodology block
-  function estText(y) {
-    const e = D.years[y].schvaleny, x = e.estimate;
-    return `Rok ${y}: súčty sú zo schváleného rozpočtu. Oficiálne rozdelenie do oblastí ešte nie je, skladáme ho z hlavnej knihy `
-      + `rozpočtu; pri programoch, ktoré miešajú oblasti (≈ ${eur(100 * x.neiste / e.total)} zo stovky), preberáme rozdelenie z roku ${x.zaklad[0]}.`;
-  }
+  const EST_LINE = "Rozdelenie do oblastí je čiastočne odhadnuté.";
+  // the full method (incl. the share of mixed programs) is in the collapsed #odhad methodology block
+  const estText = y => `Rok ${y}: súčty sú presné, rozdelenie do oblastí čiastočne odhadujeme podľa starších rozpočtov.`;
   function readHash() {
     const m = location.hash.match(/^#(\d{4})(?:-(schvaleny|skutocnost))?$/);
     if (m && available(+m[1], m[2] || "schvaleny")) { state.year = +m[1]; state.measure = m[2] || "schvaleny"; }
@@ -154,37 +152,34 @@
 
   function share(v, e) { return 100 * v / e.total; }
   function tileTip(id, childIdx) {
-    const e = entry(), t = e.tiles[id], meta = TILE[id], g = GROUP[meta.group];
+    const e = entry(), t = e.tiles[id], meta = TILE[id];
     const row = (c, i) => `<div class="r${i === childIdx ? " on" : ""}"><span>${esc(c[0])}</span><span>${eur(share(c[1], e))}</span></div>`;
-    let rows = t.c.slice(0, 6).map(row).join("");
-    if (t.c.length > 6) {
-      if (childIdx != null && childIdx >= 6) rows += row(t.c[childIdx], childIdx);   // hovered item outside the top 6
-      const rest = t.c.filter((c, i) => i >= 6 && i !== childIdx);
-      if (rest.length) rows += `<div class="r"><span>ďalšie položky (${rest.length})</span><span>${eur(share(rest.reduce((s, c) => s + c[1], 0), e))}</span></div>`;
+    const N = t.c.length <= 4 ? 4 : 3;   // max 4 rows incl. "ďalšie"
+    let rows = t.c.slice(0, N).map(row).join("");
+    if (t.c.length > N) {
+      if (childIdx != null && childIdx >= N) rows += row(t.c[childIdx], childIdx);   // hovered item outside the top N
+      const rest = t.c.filter((c, i) => i >= N && i !== childIdx);
+      if (rest.length) rows += `<div class="r"><span>ďalšie (${rest.length})</span><span>${eur(share(rest.reduce((s, c) => s + c[1], 0), e))}</span></div>`;
     }
-    const kap = t.k.map(k => `<div class="r"><span>${esc(k[0])}</span><span>${mil(k[1])}</span></div>`).join("");
-    // the same tile in the other measure of the same year (e.g. reserves: approved vs spent)
-    const other = state.measure === "schvaleny" ? "skutocnost" : "schvaleny", oe = entry(state.year, other);
-    const both = oe ? `<div class="yoy">${state.measure === "schvaleny" ? "Skutočne minuté" : "Schválený rozpočet"} ${state.year}: <b>${eur(oe.tiles[id] ? share(oe.tiles[id].v, oe) : 0)}</b> zo stovky (${mil(oe.tiles[id] ? oe.tiles[id].v : 0)})${oe.provisional ? ", predbežne" : ""}</div>` : "";
+    // payers are omitted when the breakdown already lists them (tiles split by kapitola)
+    const kids = new Set(t.c.map(c => c[0]));
+    const kap = t.k.some(k => kids.has(k[0])) ? "" : [...t.k].sort((a, b) => b[1] - a[1]).filter((k, i) => i === 0 || k[1] >= 0.1 * t.v).slice(0, 3)
+      .map(k => `<div class="r"><span>${esc(k[0])}</span><span>${amt(k[1])}</span></div>`).join("");
     let yoy = "";
     const prev = entry(state.year - 1);
     const noYoy = (meta.no_yoy || {})[state.measure];
     if (prev && noYoy) yoy = `<div class="yoy">${esc(noYoy)}</div>`;
     else if (prev) {
       const pv = prev.tiles[id] ? share(prev.tiles[id].v, prev) : 0, d = share(t.v, e) - pv;
-      yoy = Math.abs(d) < 0.005
-        ? `<div class="yoy">Podiel oproti ${state.year - 1}: <b>bez zmeny</b> (vtedy ${eur(pv)})</div>`
-        : `<div class="yoy">Zmena podielu oproti ${state.year - 1}: <b>${d >= 0 ? "+" : "−"}${eur(Math.abs(d))}</b> zo stovky (vtedy ${eur(pv)})${e.estimate ? ", podľa odhadu" : ""}</div>`;
+      yoy = `<div class="yoy">Oproti ${state.year - 1}: <b>${Math.abs(d) < 0.005 ? "bez zmeny" : (d >= 0 ? "+" : "−") + eur(Math.abs(d))}</b> zo stovky</div>`;
     }
-    const ev = D.events[state.year] ? `<div class="note">Rok ${state.year}: ${esc(D.events[state.year])}</div>` : "";
     const est = !!e.estimate, approx = est ? "≈ " : "";
     return `<div class="tt">${esc(meta.name)}${FOOT[id] ? SUP[FOOT[id]] : ""}</div>`
-      + `<div class="big">${approx}${eur(share(t.v, e))} zo stovky${est ? ' <span class="prov">odhad</span>' : ""}</div>`
-      + `<div class="meta">${approx}${mil(t.v)} · ${pct(share(t.v, e))} výdavkov štátu a Sociálnej poisťovne · ${esc(g.name)}</div>`
+      + `<div class="big">${approx}${eur(share(t.v, e))} zo stovky</div>`
+      + `<div class="meta">${approx}${amt(t.v)}${est ? " · odhad" : ""}</div>`
       + (t.c.length > 1 || childIdx != null ? `<div class="rows">${rows}</div>` : "")
-      + (kap ? `<div class="h">Kto to platí${est ? " (odhad)" : ""}</div>${kap}` : "")
-      + both + yoy + (est ? `<div class="note">${EST_LINE}</div>` : "")
-      + (meta.note ? `<div class="note">${esc(meta.note)}</div>` : "") + ev;
+      + (kap ? `<div class="h">Kto platí najviac</div>${kap}` : "")
+      + yoy + (FOOT[id] && meta.note ? `<div class="note">${esc(meta.note)}</div>` : "");
   }
 
   // ---- treemap ----
@@ -205,13 +200,13 @@
   function drawTreemap() {
     const e = entry(), width = Math.max(300, Math.round(tm.clientWidth));
     const L = layout(width);
-    const svg = el("svg", { id: "tmsvg", viewBox: `0 0 ${L.W} ${L.H}`, width: L.W, height: L.H, role: "img",
+    const svg = el("svg", { id: "tmsvg", viewBox: `0 0 ${L.W} ${L.H}`, width: L.W, height: L.H, role: "group",
       "aria-label": `Kam ide stovka zo štátnej kasy ${state.year}: štátny rozpočet a Sociálna poisťovňa spolu (${MEASURE_LABEL[state.measure]})` });
     const small = [];
     for (const { id, r } of L.tiles) {
       const t = e.tiles[id], fill = COLOR[id], ink = TEXT[id], s = share(t.v, e);
-      const g = el("g", { class: "tile", "data-id": id, tabindex: 0, role: "button",
-        "aria-label": `${TILE[id].name}: ${eur(s)} zo stovky, ${mil(t.v)}` }, svg);
+      const g = el("g", { class: "tile", "data-id": id, tabindex: 0, role: "button", "aria-describedby": "tip",
+        "aria-label": `${TILE[id].name}: ${eur(s)} zo stovky, ${amt(t.v)}` }, svg);
       el("rect", { class: "bg", x: r.x, y: r.y, width: r.w, height: r.h, rx: 2, fill }, g);
       // children as sub-rectangles (only when the tile is big enough to read them)
       let labelBox = r;
@@ -226,26 +221,26 @@
       }
       const big = Math.min(26, Math.max(15, Math.sqrt(r.w * r.h) / 9));
       const name = TILE[id].short + (FOOT[id] ? SUP[FOOT[id]] : "");
-      const amt = (e.estimate ? "≈ " : "") + eur(s);
+      const lbl = (e.estimate ? "≈ " : "") + eur(s);
       const pad = 8;
       // prefer the largest child; if the amount does not fit there, use the whole tile
-      if (labelBox !== r && (labelBox.h < big + 22 || labelBox.w - 2 * pad < textW(amt, big, 700))) labelBox = r;
+      if (labelBox !== r && (labelBox.h < big + 22 || labelBox.w - 2 * pad < textW(lbl, big, 700))) labelBox = r;
       const bw = labelBox.w - 2 * pad;
-      if (labelBox.h >= big + 22 && bw >= textW(amt, big, 700)) {
+      if (labelBox.h >= big + 22 && bw >= textW(lbl, big, 700)) {
         const maxLines = Math.max(1, Math.min(3, Math.floor((labelBox.h - pad - big - 4) / 15)));
         const lines = wrapName(name, 13, bw, maxLines);
         // when the label sits on the whole tile, sub-rectangle lines would cross it:
         // paint a tile-coloured backdrop exactly behind the text block
         if (labelBox === r && g.querySelector(".sub")) {
-          const tw = Math.max(textW(amt, big, 700), ...lines.map(l => textW(l, 13, 500)));
+          const tw = Math.max(textW(lbl, big, 700), ...lines.map(l => textW(l, 13, 500)));
           el("rect", { x: r.x + 1, y: r.y + 1, width: Math.min(r.w - 2, tw + pad * 1.5), height: Math.min(r.h - 2, pad + big + 6 + lines.length * 15),
             fill, "pointer-events": "none" }, g);
         }
-        text(g, labelBox.x + pad, labelBox.y + pad + big * .85, amt, "tl-amt", big, ink);
+        text(g, labelBox.x + pad, labelBox.y + pad + big * .85, lbl, "tl-amt", big, ink);
         lines.forEach((ln, i) => text(g, labelBox.x + pad, labelBox.y + pad + big + 15 + i * 15, ln, "tl-name", 13, ink));
         if (!lines.length || lines[lines.length - 1].endsWith("…")) small.push(id);
-      } else if (r.h >= 22 && r.w - 8 >= textW(amt, 12, 700)) {
-        text(g, r.x + 4, r.y + 16, amt, "tl-amt", 12, ink);
+      } else if (r.h >= 22 && r.w - 8 >= textW(lbl, 12, 700)) {
+        text(g, r.x + 4, r.y + 16, lbl, "tl-amt", 12, ink);
         small.push(id);
       } else {
         small.push(id);
@@ -255,8 +250,8 @@
     tmSvg = svg;
     // tiles whose name is not (fully) visible: list with amounts, tappable
     const sm = $("small");
-    sm.innerHTML = small.length ? "<b>Menšie dlaždice:</b> " + small.sort((a, b) => e.tiles[b].v - e.tiles[a].v)
-      .map(id => `<button type="button" data-id="${id}">${esc(TILE[id].name)} ${eur(share(e.tiles[id].v, e))}</button>`).join(" · ") : "";
+    sm.innerHTML = small.length ? `<span class="lbl">Menšie oblasti:</span>` + small.sort((a, b) => e.tiles[b].v - e.tiles[a].v)
+      .map(id => `<button type="button" data-id="${id}" title="${esc(TILE[id].name)}">${esc(TILE[id].short)} <b>${eur(share(e.tiles[id].v, e))}</b></button>`).join("") : "";
   }
   function tileEvent(ev) {
     const g = ev.target.closest && ev.target.closest(".tile");
@@ -309,6 +304,14 @@
     tip.scrollTop += ev.key === "ArrowDown" ? 60 : -60;
   });
   tm.addEventListener("keydown", ev => {
+    const g = ev.target.closest && ev.target.closest(".tile");
+    if (g && (ev.key === "Enter" || ev.key === " ")) {   // same pin/unpin as a mouse click
+      ev.preventDefault();
+      if (tipFor === g.dataset.id && openedBy === "pin") return hideTip();
+      const b = g.getBoundingClientRect();
+      highlight(g, null); tipFor = g.dataset.id; openedBy = "pin";
+      return showTip(tileTip(g.dataset.id, null), b.left + Math.min(b.width, 120) - 16, b.top + 10, true);
+    }
     if (ev.key !== "ArrowRight" && ev.key !== "ArrowLeft") return;
     const all = [...tm.querySelectorAll(".tile")], i = all.indexOf(document.activeElement);
     if (i < 0) return;
@@ -319,6 +322,7 @@
   $("event").addEventListener("click", ev => {
     const a = ev.target.closest('a[href="#odhad"]'), d = $("odhad"); if (!a || !d) return;
     ev.preventDefault(); d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" });
+    d.querySelector("summary").focus({ preventScroll: true });
   });
   $("small").addEventListener("click", ev => {
     const b = ev.target.closest("button[data-id]"); if (!b) return;
@@ -336,14 +340,14 @@
   function drawText() {
     const e = entry(), y = state.year, meas = MEASURE_LABEL[state.measure];
     $("ctitle").textContent = `Kam ide stovka zo štátnej kasy ${y}${e.estimate ? " (odhad)" : ""}`;
-    $("csub").innerHTML = `Štátna kasa = štátny rozpočet a Sociálna poisťovňa spolu (bez zdravotných poisťovní, obcí a krajov).<br>100 € = <b>${mld(e.total)}</b> výdavkov (${meas}) · detail ukáže klik na dlaždicu`
+    $("csub").innerHTML = `Štátny rozpočet a Sociálna poisťovňa spolu, bez zdravotných poisťovní, obcí a krajov.<br>100&nbsp;€ = <b>${mld(e.total)}</b> výdavkov · ${meas}`
       + (e.provisional ? `<span class="prov" title="Pred schválením záverečného účtu sa údaje ešte môžu spresniť.">predbežné</span>` : "")
       + (e.estimate ? `<span class="prov est">odhad rozdelenia</span>` : "");
     const ev = $("event");
     const notes = [e.estimate ? estText(y) : null, D.events[y] ? `Rok ${y}: ${D.events[y]}` : null].filter(Boolean);
     ev.hidden = !notes.length;
     ev.classList.toggle("est", !!e.estimate);
-    ev.innerHTML = esc(notes.join(" ")) + (e.estimate ? ` <a href="#odhad">Ako?</a>` : "");
+    ev.innerHTML = esc(notes.join(" ")) + (e.estimate ? ` <a href="#odhad" aria-label="Ako vznikol odhad?">Ako?</a>` : "");
     // KPIs
     // deficit: the state budget's own cash balance, expressed per 100 € of the displayed spending
     // (it is not a combined balance of the state and Sociálna poisťovňa)
@@ -355,24 +359,24 @@
       `<div class="kpi"><div class="n">${mld(e.total)}</div><div class="l">výdavky štátnej kasy ${y}${growth == null ? "" : `, ${growth >= 0 ? "+" : "−"}${pct(Math.abs(growth))} oproti ${y - 1}`}</div></div>`
       + `<div class="kpi" title="Štátny rozpočet ${mld(e.state_total - e.transfer)} bez transferu ${mld(e.transfer)} do Sociálnej poisťovne (ten by bol započítaný dvakrát)."><div class="n">${mld(e.sp_total - e.sp_internal)}</div><div class="l">z toho Sociálna poisťovňa</div></div>`
       + (gap == null ? `<div class="kpi"><div class="n">–</div><div class="l">bilancia nie je k dispozícii</div></div>`
-        : gap >= 0 ? `<div class="kpi" title="Schodok štátneho rozpočtu ${mld(stateGap)}; nie je to spoločný schodok štátu a Sociálnej poisťovne."><div class="n">${eur(gap)}</div><div class="l">schodok štátu na každých 100 €</div></div>`
-          : `<div class="kpi" title="Prebytok štátneho rozpočtu ${mld(-stateGap)}."><div class="n">${eur(-gap)}</div><div class="l">prebytok štátu na každých 100 €</div></div>`);
+        : gap >= 0 ? `<div class="kpi" title="Schodok štátneho rozpočtu ${mld(stateGap)}; nie je to spoločný schodok štátu a Sociálnej poisťovne."><div class="n">${eur(gap)}</div><div class="l">schodok štátneho rozpočtu na 100&nbsp;€ zobrazených výdavkov</div></div>`
+          : `<div class="kpi" title="Prebytok štátneho rozpočtu ${mld(-stateGap)}."><div class="n">${eur(-gap)}</div><div class="l">prebytok štátneho rozpočtu na 100&nbsp;€ zobrazených výdavkov</div></div>`);
     // legend
     $("legend").innerHTML = groupSums(e).map(({ g, v }) => `<span><span class="sw" style="background:${g.color}"></span>${esc(g.name)}<b>${eur(share(v, e))}</b></span>`).join("");
     // table
     const prev = entry(y - 1);
     let rows = "";
     for (const { g, v } of groupSums(e)) {
-      rows += `<tr class="grp"><td><span class="sw" style="background:${g.color}"></span>${esc(g.name)}</td><td></td><td>${eur(share(v, e))}</td><td>${mil(v)}</td><td></td></tr>`;
+      rows += `<tr class="grp"><td><span class="sw" style="background:${g.color}"></span>${esc(g.name)}</td><td>${eur(share(v, e))}</td><td>${amt(v)}</td><td></td></tr>`;
       for (const t of TILES.filter(t => t.group === g.id && e.tiles[t.id]).sort((a, b) => e.tiles[b.id].v - e.tiles[a.id].v)) {
         const tv = e.tiles[t.id].v;
         let d = "";
         if (prev && (t.no_yoy || {})[state.measure]) d = "neporovnateľné";
-        else if (prev) { const x = share(tv, e) - (prev.tiles[t.id] ? share(prev.tiles[t.id].v, prev) : 0); d = (x >= 0 ? "+" : "−") + nf2.format(Math.abs(x)); }
-        rows += `<tr><td>${esc(t.name)}</td><td>${esc(g.name)}</td><td>${eur(share(tv, e))}</td><td>${mil(tv)}</td><td>${d}</td></tr>`;
+        else if (prev) { const x = share(tv, e) - (prev.tiles[t.id] ? share(prev.tiles[t.id].v, prev) : 0); d = (x >= 0 ? "+" : "−") + eur(Math.abs(x)); }
+        rows += `<tr><td>${esc(t.name)}</td><td>${eur(share(tv, e))}</td><td>${amt(tv)}</td><td>${d}</td></tr>`;
       }
     }
-    $("table").innerHTML = `<table><caption class="sr">${esc($("ctitle").textContent)}, ${meas}</caption><thead><tr><th>Dlaždica</th><th>Skupina</th><th>€ zo stovky</th><th>Suma</th><th>Zmena v € zo stovky oproti ${y - 1}</th></tr></thead><tbody>${rows}</tbody></table>`;
+    $("table").innerHTML = `<div class="tbl-scroll"><table><caption class="sr">${esc($("ctitle").textContent)}, ${meas}</caption><thead><tr><th>Oblasť</th><th>Zo stovky</th><th>Suma</th><th>Medziročná zmena</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
 
   // ---- controls ----
@@ -432,22 +436,22 @@
     const colW = Math.max(30, Math.min(44, (avail - 60) / n)), gap = Math.round(colW * .22);
     const ml = 34, mr = 8, mt = 10, mb = 66, ph = 360;
     const W = Math.round(ml + mr + n * colW), H = mt + ph + mb;
-    const svg = el("svg", { id: "tcsvg", viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img",
-      "aria-label": `Podiel jednotlivých oblastí na výdavkoch štátneho rozpočtu ${YEARS[0]} až ${YEARS[n - 1]} (${MEASURE_LABEL[m]})` });
+    const svg = el("svg", { id: "tcsvg", viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "group",
+      "aria-label": `Podiel jednotlivých oblastí na výdavkoch štátnej kasy ${YEARS[0]} až ${YEARS[n - 1]} (${MEASURE_LABEL[m]})` });
     for (let p = 0; p <= 100; p += 25) {
       const yy = mt + ph - ph * p / 100;
       el("line", { x1: ml, x2: W - mr, y1: yy, y2: yy, stroke: "#e8eaf0" }, svg);
-      text(svg, ml - 6, yy + 4, p + " €", "ax", 11, "#6b7280").setAttribute("text-anchor", "end");
+      text(svg, ml - 6, yy + 4, p + "\u00a0€", "ax", 11, "#6b7280").setAttribute("text-anchor", "end");
     }
     YEARS.forEach((y, i) => {
       const e = entry(y, m), x = ml + i * colW;
-      const g = el("g", { class: "col" + (y === state.year ? " sel" : ""), "data-year": y, tabindex: e ? 0 : -1, role: "button" }, svg);
+      const g = el("g", { class: "col" + (y === state.year ? " sel" : ""), "data-year": y, tabindex: e ? 0 : -1, role: "button", "aria-describedby": "tip" }, svg);
       el("rect", { class: "colbg", x, y: mt, width: colW, height: ph, fill: "transparent" }, g);
       const yl = text(g, x + colW / 2, mt + ph + 16, "’" + String(y).slice(2), "yl", 11.5, "#6b7280");
       yl.setAttribute("text-anchor", "middle");
       if (!e) {
         el("rect", { x: x + gap / 2, y: mt, width: colW - gap, height: ph, fill: "none", stroke: "#cdd2dc", "stroke-dasharray": "4 3" }, g);
-        const t = text(g, x + colW / 2, mt + ph / 2, "zatiaľ nie", "ax", 10, "#9aa0ab");
+        const t = text(g, x + colW / 2, mt + ph / 2, "zatiaľ nie", "ax", 10, "#6b7280");
         t.setAttribute("text-anchor", "middle"); t.setAttribute("transform", `rotate(-90 ${x + colW / 2} ${mt + ph / 2})`);
         g.setAttribute("aria-label", `${y}: skutočnosť zatiaľ nie je k dispozícii`);
         return;
@@ -474,7 +478,7 @@
       const prev = entry(y - 1, m);
       if (prev) {
         const gr = 100 * (e.total / prev.total - 1);
-        const t2 = text(g, x + colW / 2, mt + ph + 30, (gr >= 0 ? "+" : "−") + nf0.format(Math.abs(gr)) + "%", "ax", 9.5, "#9aa0ab");
+        const t2 = text(g, x + colW / 2, mt + ph + 30, (gr >= 0 ? "+" : "−") + nf0.format(Math.abs(gr)) + "\u00a0%", "ax", 9.5, "#6b7280");
         t2.setAttribute("text-anchor", "middle");
       }
       if (D.events[y]) {
@@ -483,19 +487,19 @@
       const top = groupSums(e).sort((a, b) => b.v - a.v).slice(0, 3).map(s => `${s.g.name} ${eur(share(s.v, e))}`).join(", ");
       g.setAttribute("aria-label", `${y}: ${mld(e.total)}; ${top}. Enter zobrazí rok v hlavnom grafe.`);
     });
-    text(svg, ml, H - 4, "pod rokom: rast výdavkov oproti predchádzajúcemu roku · ● poznámka k roku (v bublinke)", "ax", 10, "#9aa0ab");
+    text(svg, ml, H - 4, "pod rokom: rast výdavkov oproti predchádzajúcemu roku · ● poznámka k roku (v bublinke)", "ax", 10, "#6b7280");
     tc.replaceChildren(svg);
   }
   function colTip(y, tileId) {
     const e = entry(y, state.measure);
-    if (!e) return `<div class="tt">${y}</div><div class="meta">Skutočnosť za tento rok zatiaľ nie je k dispozícii.</div>`;
-    let head = `<div class="tt">${y} · ${MEASURE_LABEL[state.measure]}${e.provisional ? " (predbežné)" : ""}${e.estimate ? ' <span class="prov">odhad</span>' : ""}</div><div class="meta">100 € = ${mil(e.total)}${e.estimate ? ` · ${EST_LINE}` : ""}</div>`;
+    if (!e) return `<div class="tt">${y}</div><div class="meta">Skutočnosť za tento rok nie je k dispozícii.</div>`;
+    let head = `<div class="tt">${y} · ${MEASURE_LABEL[state.measure]}${e.provisional ? " (predbežné)" : ""}${e.estimate ? ' <span class="prov">odhad</span>' : ""}</div><div class="meta">100&nbsp;€ = ${amt(e.total)}</div>`;
     if (tileId && e.tiles[tileId]) {
       const t = e.tiles[tileId], approx = e.estimate ? "≈ " : "";
-      head += `<div class="big">${approx}${eur(share(t.v, e))}</div><div class="meta">${esc(TILE[tileId].name)} · ${approx}${mil(t.v)}</div>`;
+      head += `<div class="big">${approx}${eur(share(t.v, e))}</div><div class="meta">${esc(TILE[tileId].name)} · ${approx}${amt(t.v)}</div>`;
     }
     const rows = groupSums(e).map(({ g, v }) => `<div class="r"><span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;background:${g.color}"></span>${esc(g.name)}</span><span>${eur(share(v, e))}</span></div>`).join("");
-    return head + `<div class="rows">${rows}</div>` + (e.estimate ? `<div class="note">${esc(estText(y))}</div>` : "")
+    return head + `<div class="rows">${rows}</div>` + (e.estimate ? `<div class="note">${EST_LINE}</div>` : "")
       + (D.events[y] ? `<div class="note">${esc(D.events[y])}</div>` : "");
   }
   tc.addEventListener("pointermove", ev => {
@@ -526,7 +530,7 @@
 
   // ---- debt service over time: bars in mld. € (top), € zo stovky (bottom), shared years ----
   const dc = $("dc");
-  const DEBT_NOTE = "Výdavok štátneho rozpočtu na obsluhu dlhu; od roku 2012 je to transfer organizácii, ktorá dlh spravuje, a úroky zaplatené v danom roku sa od neho môžu líšiť. Bežné ceny.";
+  const DEBT_NOTE = "Od roku 2012 ide o transfer správcovi dlhu, nie o zaplatené úroky.";
   function debtVal(y, m = state.measure) {
     const e = entry(y, m);
     if (!e) return null;
@@ -541,7 +545,7 @@
     const vals = YEARS.map(y => debtVal(y));
     const maxV = Math.max(...vals.filter(Boolean).map(d => d.v)) / 1e9;
     const topV = Math.ceil(maxV * 2) / 2, topS = Math.ceil(Math.max(...vals.filter(Boolean).map(d => d.s)));
-    const svg = el("svg", { id: "dcsvg", viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img",
+    const svg = el("svg", { id: "dcsvg", viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "group",
       "aria-label": `Obsluha štátneho dlhu ${YEARS[0]} až ${YEARS[n - 1]} (${MEASURE_LABEL[state.measure]})` });
     const y1 = v => mt + h1 - h1 * v / topV, y2 = s => mt + h1 + gapP + h2 - h2 * s / topS;
     text(svg, ml, mt - 8, "mld. €", "ax", 11, "#6b7280");
@@ -568,11 +572,11 @@
     el("path", { d: path, fill: "none", stroke: COLOR.dlh, "stroke-width": 2.5 }, svg);
     YEARS.forEach((y, i) => {
       const d = vals[i], x = ml + i * colW, cx = x + colW / 2, gw = colW * .22;
-      const g = el("g", { class: "col" + (y === state.year ? " sel" : ""), "data-year": y, tabindex: d ? 0 : -1, role: "button" }, svg);
+      const g = el("g", { class: "col" + (y === state.year ? " sel" : ""), "data-year": y, tabindex: d ? 0 : -1, role: "button", "aria-describedby": "tip" }, svg);
       el("rect", { class: "colbg", x, y: mt, width: colW, height: h1 + gapP + h2, fill: "transparent" }, g);
       text(g, cx, H - mb + 16, "’" + String(y).slice(2), "yl", 11.5, "#6b7280").setAttribute("text-anchor", "middle");
       if (!d) {
-        text(g, cx, mt + h1 - 6, "–", "ax", 12, "#9aa0ab").setAttribute("text-anchor", "middle");
+        text(g, cx, mt + h1 - 6, "–", "ax", 12, "#6b7280").setAttribute("text-anchor", "middle");
         g.setAttribute("aria-label", `${y}: ${MEASURE_LABEL[state.measure]} zatiaľ nie je k dispozícii`);
         return;
       }
@@ -594,15 +598,14 @@
     const chg = p ? `<div class="yoy">Oproti ${y - 1}: <b>${d.v >= p.v ? "+" : "−"}${mld(Math.abs(d.v - p.v))}</b>, podiel ${d.s >= p.s ? "+" : "−"}${eur(Math.abs(d.s - p.s))} zo stovky</div>` : "";
     return `<div class="tt">${y} · ${meas}${d.prov ? " (predbežné)" : ""}${d.est ? ' <span class="prov">odhad</span>' : ""}</div>`
       + `<div class="big">${d.est ? "≈ " : ""}${mld(d.v)}</div><div class="meta">${d.est ? "≈ " : ""}${eur(d.s)} zo stovky štátnej kasy</div>`
-      + chg + lowNote(y) + `<div class="note">${esc(DEBT_NOTE)}</div>`;
+      + chg + lowNote(y) + (y >= 2012 ? `<div class="note">${DEBT_NOTE}</div>` : "");
   }
   // transfer years (since 2012) where the actual transfer fell far short of the approved one
   // (2020: 0,80 of 1,16; 2021: 0,66 of 1,11 mld. €)
   function lowNote(y) {
     const a = debtVal(y, "skutocnost"), s = debtVal(y, "schvaleny");
     if (y < 2012 || !a || !s || a.v >= 0.75 * s.v) return "";
-    return `<div class="note"><b>Nezvyčajne nízky transfer:</b> v roku ${y} štát skutočne poslal na obsluhu dlhu len ${mld(a.v)} `
-      + `zo schválených ${mld(s.v)}. Úroky zaplatené v tom roku sa preto môžu od tejto sumy výrazne líšiť.</div>`;
+    return `<div class="note">Transfer: ${mld(a.v)} zo schválených ${mld(s.v)}.</div>`;
   }
   dc.addEventListener("pointermove", ev => {
     if (ev.pointerType !== "mouse") return;
@@ -635,14 +638,15 @@
   // ---- PNG export (copy / download) with title, scope caveat and source baked in ----
   const FONT = "-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
   const EXPORT_CSS = `text{font-family:${FONT}}.tl-amt{font-weight:700}.tl-name{font-weight:500}.tile .sub{fill:none;stroke:rgba(255,255,255,.85);stroke-width:1}`;
-  const SCOPE = "Štátny rozpočet (súčet kapitol) a Sociálna poisťovňa spolu, transfer zo štátu do Sociálnej poisťovne započítaný raz. Nie sú tu zdravotné poisťovne, obce a kraje.";
+  const SCOPE = "Štátny rozpočet a Sociálna poisťovňa bez vzájomných transferov. Bez zdravotných poisťovní, obcí a krajov.";
   function exportMeta(which) {
     const meas = MEASURE_LABEL[state.measure], e = entry();
     if (which === "tm") return {
       title: `Kam ide stovka zo štátnej kasy ${state.year}${e.estimate ? " (odhad)" : ""}`,
-      sub: `100 € = ${mld(e.total)} výdavkov (${meas}${e.provisional ? ", predbežné údaje" : ""}${e.estimate ? "; rozdelenie do oblastí je odhad" : ""})`,
+      sub: `100 € = ${mld(e.total)} výdavkov (${meas}${e.provisional ? ", predbežné údaje" : ""})`,
       legend: true,
-      extra: [e.estimate ? EST_LINE + " " + estText(state.year) : "", $("small").textContent].concat(D.footnoted.filter(id => e.tiles[id])
+      extra: [e.estimate ? `${state.year}: ${EST_LINE.charAt(0).toLowerCase() + EST_LINE.slice(1)}` : "",
+        smallList()].concat(D.footnoted.filter(id => e.tiles[id])
         .map(id => `${SUP[FOOT[id]]} ${TILE[id].name}: ${TILE[id].note}`)).filter(Boolean)
     };
     const prov = YEARS.some(y => (entry(y) || {}).provisional);
@@ -654,6 +658,10 @@
     return { title: `Stovka zo štátnej kasy v čase, ${YEARS[0]} – ${YEARS[YEARS.length - 1]}`,
       sub: `${meas}${prov ? " (posledný uzavretý rok predbežne)" : ""}${estY.length ? ` · ${estY.join(", ")}: rozdelenie je odhad (šrafované)` : ""} · rovnaká výška stĺpcov = podiely, nie rast výdavkov`, legend: true,
       extra: estY.length ? [`${estY.join(", ")}: ${EST_LINE}`] : [] };
+  }
+  function smallList() {
+    const bs = [...$("small").querySelectorAll("button")];
+    return bs.length ? "Menšie oblasti: " + bs.map(b => `${b.title} ${b.querySelector("b").textContent}`).join(", ") : "";
   }
   function wrapLines(g, str, maxW) {
     const words = str.split(" "), lines = []; let cur = "";
@@ -671,17 +679,24 @@
     img.onload = () => {
       const CW = Math.max(W + 2 * pad, 640);
       const probe = document.createElement("canvas").getContext("2d");
+      probe.font = `700 20px ${FONT}`;
+      const titleL = wrapLines(probe, meta.title, CW - 2 * pad);
+      probe.font = `13px ${FONT}`;
+      const subL = wrapLines(probe, meta.sub, CW - 2 * pad);
       probe.font = `12px ${FONT}`;
       const scope = (meta.extra || []).flatMap(x => wrapLines(probe, x, CW - 2 * pad)).concat(wrapLines(probe, SCOPE, CW - 2 * pad));
       const legendItems = meta.legend ? groupSums(entry()).map(s => s.g) : [];
-      const head = 58, legendH = legendItems.length ? 26 : 0, foot = 26 + scope.length * 16;
+      const head = 8 + titleL.length * 26 + subL.length * 18 + 14, legendH = legendItems.length ? 26 : 0, foot = 26 + scope.length * 16;
       const c = document.createElement("canvas");
       c.width = CW * S; c.height = (head + H + legendH + foot) * S;
       const g = c.getContext("2d"); g.scale(S, S);
       g.fillStyle = "#fff"; g.fillRect(0, 0, CW, head + H + legendH + foot);
       g.fillStyle = "#1b2130"; g.font = `700 20px ${FONT}`; g.textBaseline = "alphabetic";
-      g.fillText(meta.title, pad, 28);
-      g.fillStyle = "#6b7280"; g.font = `13px ${FONT}`; g.fillText(meta.sub, pad, 48);
+      let hy = 28;
+      for (const l of titleL) { g.fillText(l, pad, hy); hy += 26; }
+      g.fillStyle = "#6b7280"; g.font = `13px ${FONT}`;
+      hy -= 6;
+      for (const l of subL) { g.fillText(l, pad, hy); hy += 18; }
       g.drawImage(img, pad, head, W, H);
       let lx = pad, ly = head + H + 18;
       g.font = `600 12px ${FONT}`;
@@ -693,7 +708,7 @@
       g.font = `12px ${FONT}`; g.fillStyle = "#6b7280";
       for (const l of scope) { g.fillText(l, pad, fy); fy += 16; }
       g.font = `600 13px ${FONT}`; g.fillStyle = "#2f6fed"; g.fillText(D.site, pad, fy + 4);
-      g.textAlign = "right"; g.fillStyle = "#9aa0ab"; g.font = `12px ${FONT}`;
+      g.textAlign = "right"; g.fillStyle = "#6b7280"; g.font = `12px ${FONT}`;
       g.fillText("Projekt Žltá Stopa · dáta: rozpocet.sk (MF SR)", CW - pad, fy + 4);
       cb(c);
     };

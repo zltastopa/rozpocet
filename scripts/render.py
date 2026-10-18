@@ -67,9 +67,9 @@ def main() -> None:
             f"Sociálna poisťovňa (<a href=\"{esc(x['zdroj_sp'])}\">schválený rozpočet</a>) a transfer medzi nimi.</li>"
             f"<li><b>Presné:</b> sumy, ktorých účel uvádza hlavná kniha rozpočtu, napríklad 560 + 50 mil. € vojenským "
             f"nemocniciam alebo odvod do EÚ (<a href=\"data/navrh_polozky.csv\">zoznam so zdrojmi</a>).</li>"
-            f"<li><b>Odhad:</b> ostatné <a href=\"{esc(x['zdroj_programy'])}\">programy zo zákona</a> delíme ako v rozpočte "
-            f"{x['zaklad'][0]}, bez Plánu obnovy, ktorý končí. Programy, ktoré miešajú oblasti, dali vtedy mimo hlavnej "
-            f"oblasti ≈ {mixed} € zo stovky.</li>"
+            f"<li><b>Odhad:</b> ostatné <a href=\"{esc(x['zdroj_programy'])}\">programy zo zákona</a> delíme podľa rozpočtu "
+            f"{x['zaklad'][0]}{', prípadne ' + str(x['zaklad'][1]) if len(x['zaklad']) > 1 else ''} alebo celej kapitoly; "
+            f"riadky Plánu obnovy vynechávame. Programy, ktoré miešajú oblasti, tvoria ≈ {mixed} € zo stovky.</li>"
             + (f"<li><b>Test:</b> rovnaký postup na roku {bt['rok']} sa mýlil priemerne o {sk_num(bt['priemerna_chyba'])} € "
                f"na dlaždicu, najviac o {sk_num(bt['max_chyba'])} €.</li>" if bt else "")
             + "<li>Keď ministerstvo zverejní skutočné rozdelenie, odhad sa pri mesačnej obnove nahradí.</li></ul></details>")
@@ -105,7 +105,7 @@ def main() -> None:
     </a>
   </div>
   <p class="tagline">Keby bola celá štátna kasa jedna stovka</p>
-  <p class="sub">Koľko z nej ide na dôchodky, školy, dávky, armádu či úroky z dlhu? Roky {first} až {last}.</p>
+  <p class="sub">Koľko z nej ide na dôchodky, školy, dávky, obranu či obsluhu dlhu? Roky {first} až {last}.</p>
 </header>
 
 <section class="main-chart">
@@ -130,8 +130,7 @@ def main() -> None:
 
 <section>
   <h2>Stovka v čase</h2>
-  <p class="desc">Každý stĺpec je jeden rok rozdelený na 100&nbsp;€, ukazuje podiely, nie rast výdavkov.
-    Klik na stĺpec zobrazí ten rok hore.</p>
+  <p class="desc">Každý stĺpec delí ročné výdavky na 100&nbsp;€, ukazuje podiely. Klik na stĺpec vyberie rok.</p>
   <div class="tc-scroll"><div id="tc"></div></div>
   <div class="chart-tools" data-chart="tc"><button class="ct" data-act="copy" type="button">Kopírovať obrázok</button><button class="ct" data-act="download" type="button">Stiahnuť PNG</button></div>
 </section>
@@ -154,17 +153,16 @@ def main() -> None:
   <details><summary>Čo je v stovke</summary><ul>
     <li>Štátny rozpočet (súčet kapitol zo zákona, pre rok 2026 presne 32&nbsp;899&nbsp;667&nbsp;683&nbsp;€) a Sociálna poisťovňa.
       V Česku sú dôchodky v štátnom rozpočte, u nás ich vypláca Sociálna poisťovňa, preto ju pridávame.</li>
-    <li>Transfer zo štátu do Sociálnej poisťovne (položka 641003, v roku 2026 2,34 mld.&nbsp;€) rátame raz, tam, kde sa peniaze vyplatia.</li>
+    <li>Transfer štátu do Sociálnej poisťovne (v roku 2026 2,34 mld.&nbsp;€) aj presuny medzi jej fondmi odpočítavame, aby sa peniaze nerátali dvakrát.</li>
     <li>Mimo stovky sú zdravotné poisťovne, obce a kraje. Je to rozdelenie výdavkov, nie toho, kam idú dane jedného človeka.</li>
     <li>Súhrn „Štátny rozpočet“ z API nepoužívame: pridáva účet Štátny dlh a niektoré peniaze ráta dvakrát.</li>
-    <li>Odvody, ktoré štát platí ako zamestnávateľ, ostávajú (ako v európskej metodike). Päť drobných transferov
+    <li>Odvody, ktoré štát platí ako zamestnávateľ, ostávajú. Päť drobných transferov
       bez uvedeného príjemcu (spolu menej ako 0,3 mil.&nbsp;€) ostáva výdavkom štátu.</li>
     <li>Kontrola: v roku 2023 sa výdavky Sociálnej poisťovne po odpočte líšia od jej Správy o hospodárení o 34 mil.&nbsp;€, ktoré nevieme vysvetliť.</li>
   </ul></details>
   <details><summary>Schválený rozpočet a skutočnosť</summary><ul>
     <li><b>Schválený rozpočet:</b> podľa zákona vrátane noviel počas roka (v roku 2020 z 18,56 na 26,32 mld.&nbsp;€).</li>
-    <li><b>Skutočnosť:</b> skutočné čerpanie. Konečné po štátnom záverečnom účte (naposledy {DATA['final_account_through']}),
-      neskoršie roky predbežne, bežný rok sa nezobrazuje.</li>
+    <li><b>Skutočnosť:</b> skutočné čerpanie je konečné do roku {DATA['final_account_through']}, neskoršie uzavreté roky sú predbežné, bežný rok sa nezobrazuje.</li>
     <li>Sumy pred rokom 2009 sú prepočítané kurzom 30,1260&nbsp;Sk/€.</li>
   </ul></details>
   <details><summary>Ako sa delí do dlaždíc</summary><ul>
@@ -173,8 +171,8 @@ def main() -> None:
       odvod do EÚ a financie VPS majú vlastné dlaždice.</li>
     <li>Sociálna poisťovňa: starobné, invalidné a pozostalostné dôchodky do Dôchodkov; nemocenské, materské,
       úrazové dávky, dávka v nezamestnanosti a správa do Dávok.</li>
-    <li>Súčet dlaždíc sa každý rok zhoduje na euro so zverejnenými celkami, inak sa dáta nezverejnia.
-      Drobné rozdiely medzi dvoma zdrojmi MF: {esc(residuals)}.</li>
+    <li>Súčet dlaždíc kontrolujeme so zverejnenými celkami (tolerancia 1&nbsp;€); zobrazené sumy sú zaokrúhlené.</li>
+    <li>Drobné rozdiely medzi dvoma zdrojmi MF: {esc(residuals)}.</li>
   </ul></details>
   {next_year_note}
   <p class="desc">Vygenerované {sk_date(DATA['generated'])}.</p>

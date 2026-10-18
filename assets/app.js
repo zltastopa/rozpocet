@@ -531,6 +531,85 @@
     if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); setState(+c.dataset.year); tc.querySelector(`.col[data-year="${c.dataset.year}"]`).focus(); }
   });
 
+  // ---- approved vs actually spent per year (independent of the measure toggle) ----
+  const pc = $("pc");
+  const PC_LESS = GROUPS[2].color, PC_MORE = GROUPS[1].color;
+  const PY = YEARS.filter(y => available(y, "schvaleny") && available(y, "skutocnost"));
+  const sgn = x => x >= 0 ? "+" : "−";
+  function planVal(y) {
+    const s = D.years[y].schvaleny, a = D.years[y].skutocnost, d = a.total - s.total;
+    return { s, a, d, p: 100 * d / s.total, prov: !!a.provisional, est: !!(s.estimate || a.estimate) };
+  }
+  function drawPlan() {
+    const n = PY.length, avail = pc.parentElement.clientWidth;
+    const colW = Math.max(26, Math.min(44, (avail - 60) / n));
+    const ml = 40, mr = 12, mt = 26, ph = 210, mb = 40;
+    const W = Math.round(ml + mr + n * colW), H = mt + ph + mb;
+    const vals = PY.map(planVal), ds = vals.map(v => v.d / 1e9);
+    const step = Math.max(...ds.map(Math.abs)) > 6 ? 2 : 1;
+    const top = Math.ceil((Math.max(0, ...ds) + .4) / step) * step, bot = Math.floor((Math.min(0, ...ds) - .4) / step) * step;
+    const yv = v => mt + ph * (top - v) / (top - bot || 1);
+    const svg = el("svg", { id: "pcsvg", viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "group",
+      "aria-label": `Rozdiel medzi skutočnými a schválenými výdavkami ${PY[0]} až ${PY[n - 1]}` });
+    text(svg, ml, mt - 12, "mld. €", "ax", 11, "#6b7280");
+    for (let t = bot; t <= top; t += step) {
+      el("line", { x1: ml, x2: W - mr, y1: yv(t), y2: yv(t), stroke: t === 0 ? "#9aa1ae" : "#e8eaf0" }, svg);
+      text(svg, ml - 6, yv(t) + 4, t > 0 ? "+" + t : t < 0 ? "−" + -t : "0", "ax", 11, "#6b7280").setAttribute("text-anchor", "end");
+    }
+    const pat = el("pattern", { id: "hatch3", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, el("defs", {}, svg));
+    el("line", { x1: 0, y1: 0, x2: 0, y2: 6, stroke: "#fff", "stroke-width": 2, "stroke-opacity": .7 }, pat);
+    PY.forEach((y, i) => {
+      const v = vals[i], x = ml + i * colW, cx = x + colW / 2, gw = colW * .22;
+      const g = el("g", { class: "col" + (y === state.year ? " sel" : ""), "data-year": y, tabindex: 0, role: "button", "aria-describedby": "tip" }, svg);
+      el("rect", { class: "colbg", x, y: mt, width: colW, height: ph, fill: "transparent" }, g);
+      text(g, cx, H - mb + 16, "’" + String(y).slice(2), "yl", 11.5, "#6b7280").setAttribute("text-anchor", "middle");
+      const y0 = yv(0), y1 = yv(ds[i]), r = { x: x + gw / 2, y: Math.min(y0, y1), width: colW - gw, height: Math.max(1, Math.abs(y1 - y0)) };
+      el("rect", Object.assign({ fill: v.d < 0 ? PC_LESS : PC_MORE }, r), g);
+      if (v.prov) {
+        el("rect", Object.assign({ fill: "url(#hatch3)", "pointer-events": "none" }, r), g);
+        text(g, cx, H - mb + 30, "predb.", "ax", 9.5, "#8a5a00").setAttribute("text-anchor", "middle");
+      }
+      const ly = v.d < 0 ? r.y + r.height + 11 : r.y - 4;
+      text(g, cx, ly, sgn(v.d) + nf1.format(Math.abs(v.p)), "ax", colW >= 32 ? 10 : 9, "#6b7280").setAttribute("text-anchor", "middle");
+      g.setAttribute("aria-label", `${y}: rozdiel ${sgn(v.d)}${mld(Math.abs(v.d))} (${sgn(v.d)}${pct(Math.abs(v.p))})${v.prov ? ", predbežné" : ""}. Enter zobrazí rok v hlavnom grafe.`);
+    });
+    text(svg, ml, H - 4, "pod nulou: minuli menej, nad nulou: viac · číslo = rozdiel v %", "ax", 10, "#6b7280");
+    pc.replaceChildren(svg);
+  }
+  function planTip(y) {
+    const v = planVal(y), st = v.s.tiles, at = v.a.tiles;
+    const ids = [...new Set(Object.keys(st).concat(Object.keys(at)))];
+    const dv = id => ((at[id] || {}).v || 0) - ((st[id] || {}).v || 0);
+    const rows = ids.sort((a, b) => Math.abs(dv(b)) - Math.abs(dv(a))).slice(0, 3)
+      .map(id => `<div class="r"><span>${esc(TILE[id].short)}</span><span>${v.est ? "≈ " : ""}${sgn(dv(id))}${mld(Math.abs(dv(id)))}</span></div>`).join("");
+    return `<div class="tt">${y}${v.prov ? " (predbežné)" : ""}</div>`
+      + `<div class="meta">Schválené ${mld(v.s.total)} · Skutočne ${mld(v.a.total)}</div>`
+      + `<div class="big">Rozdiel ${sgn(v.d)}${mld(Math.abs(v.d))} (${sgn(v.d)}${pct(Math.abs(v.p))})</div>`
+      + `<div class="meta">Najväčšie rozdiely:</div><div class="rows">${rows}</div>`;
+  }
+  pc.addEventListener("pointermove", ev => {
+    if (ev.pointerType !== "mouse") return;
+    const c = ev.target.closest(".col"); if (!c) return hideTip();
+    openedBy = "mouse"; showTip(planTip(+c.dataset.year), ev.clientX, ev.clientY);
+  });
+  pc.addEventListener("pointerleave", ev => { if (ev.pointerType === "mouse") hideTip(); });
+  pc.addEventListener("click", ev => {
+    const c = ev.target.closest(".col"); if (!c) return;
+    const y = +c.dataset.year;
+    if (available(y, state.measure)) setState(y);
+    if (lastPointer.type !== "mouse") { openedBy = "tap"; showTip(planTip(y), ev.clientX, ev.clientY, true); }
+  });
+  pc.addEventListener("focusin", ev => {
+    const c = ev.target.closest(".col"); if (!c || fromPointer()) return;
+    const b = c.getBoundingClientRect(); openedBy = "key";
+    showTip(planTip(+c.dataset.year), b.right, b.top + 40, true);
+  });
+  pc.addEventListener("focusout", () => { if (openedBy === "key") hideTip(); });
+  pc.addEventListener("keydown", ev => {
+    const c = ev.target.closest(".col"); if (!c) return;
+    if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); setState(+c.dataset.year); pc.querySelector(`.col[data-year="${c.dataset.year}"]`).focus(); }
+  });
+
   // ---- debt service over time: bars in mld. € (top), € zo stovky (bottom), shared years ----
   const dc = $("dc");
   const DEBT_NOTE = "Od roku 2012 ide o transfer správcovi dlhu, nie o zaplatené úroky.";
@@ -634,9 +713,9 @@
   });
 
   // ---- render all ----
-  function render() { drawControls(); drawText(); drawTreemap(); drawTime(); drawDebt(); }
+  function render() { drawControls(); drawText(); drawTreemap(); drawTime(); drawPlan(); drawDebt(); }
   let rz = 0;
-  window.addEventListener("resize", () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { drawTreemap(); drawTime(); drawDebt(); }); });
+  window.addEventListener("resize", () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { drawTreemap(); drawTime(); drawPlan(); drawDebt(); }); });
 
   // ---- PNG export (copy / download) with title, scope caveat and source baked in ----
   const FONT = "-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
@@ -654,6 +733,10 @@
     };
     const prov = YEARS.some(y => (entry(y) || {}).provisional);
     const estY = YEARS.filter(y => isEst(y, state.measure));
+    if (which === "pc") return {
+      title: `Plán a skutočnosť, ${PY[0]} – ${PY[PY.length - 1]}`,
+      sub: `Skutočné mínus schválené výdavky v mld. € · zelená: menej, oranžová: viac${PY.some(y => planVal(y).prov) ? " · šrafované: predbežné" : ""}`,
+      legend: false, extra: [] };
     if (which === "dc") return {
       title: `Obsluha štátneho dlhu, ${YEARS[0]} – ${YEARS[YEARS.length - 1]}`,
       sub: `${meas}${prov ? " (posledný uzavretý rok predbežne)" : ""} · hore mld. €, dole € zo stovky štátnej kasy${estY.length ? ` · ${estY.join(", ")}: odhad (šrafované)` : ""}`,
@@ -735,7 +818,7 @@
     if (!svg) return;
     const meta = exportMeta(which);
     const name = { tm: `stovka-${state.year}-${state.measure}`, tc: `stovka-v-case-${state.measure}`,
-                   dc: `obsluha-dlhu-${state.measure}` }[which];
+                   dc: `obsluha-dlhu-${state.measure}`, pc: "plan-a-skutocnost" }[which];
     const save = p => p.then(b => { if (b) { dl(b, name); flash(btn, "Stiahnuté ✓"); } else flash(btn, "Chyba"); });
     if (btn.dataset.act === "download") return save(toBlob(svg, meta));
     if (navigator.clipboard && window.ClipboardItem) {   // Safari needs write() inside the gesture

@@ -31,11 +31,13 @@ vložené priamo v nej, otvorí sa aj offline):
   schodok štátu a Sociálnej poisťovne).
 - **Stovka v čase:** stopercentné stĺpce 2006 až 2026 s pevným poradím a
   farbami dlaždíc; kliknutím na stĺpec sa rok zobrazí v treemape.
+- **Plán a skutočnosť:** o koľko mld. € (a %) sa skutočné výdavky líšili od
+  schválených v rokoch 2006 až 2025; v bublinke tri dlaždice s najväčším rozdielom.
 - **Obsluha štátneho dlhu v čase:** v mld. € (hore) a v € zo stovky (dole),
   2006 až 2027, s upozornením, že od roku 2012 je to transfer organizácii, ktorá
   dlh spravuje (skutočne zaplatené úroky sa od neho môžu líšiť, výrazne v rokoch
   2020 a 2021).
-- **Kopírovať / stiahnuť PNG** pre oba grafy, s názvom, rokom, rozsahom údajov
+- **Kopírovať / stiahnuť PNG** pre všetky grafy, s názvom, rokom, rozsahom údajov
   a zdrojom vloženým priamo do obrázka.
 - Tabuľka hodnôt, ovládanie klávesnicou, zdieľateľný odkaz na rok
   (`#2025-skutocnost`).

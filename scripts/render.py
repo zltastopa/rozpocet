@@ -137,6 +137,14 @@ def main() -> None:
 </section>
 
 <section>
+  <h2>Plán a skutočnosť</h2>
+  <p class="desc">O koľko štát minul viac alebo menej, než schválil. Rozdiel nie je len šetrenie: presúva sa aj rezerva
+    a míňajú sa peniaze z minulých rokov.</p>
+  <div class="tc-scroll"><div id="pc"></div></div>
+  <div class="chart-tools" data-chart="pc"><button class="ct" data-act="copy" type="button">Kopírovať obrázok</button><button class="ct" data-act="download" type="button">Stiahnuť PNG</button></div>
+</section>
+
+<section>
   <h2>Obsluha štátneho dlhu v čase</h2>
   <p class="desc">Hore v miliardách eur, dole zo stovky.
     Od roku 2012 je to transfer správcovi dlhu, nie priamo zaplatené úroky; v rokoch 2020 a 2021 štát

@@ -28,7 +28,8 @@ jobs:
         run: |
           mkdir -p _site/data
           cp index.html _site/index.html
-          cp data/stovka.json data/kapitola_fnc.csv _site/data/
+          # every data file the page links to (methodology links navrh_polozky.csv)
+          cp data/stovka.json data/kapitola_fnc.csv data/navrh_polozky.csv _site/data/
           cp CNAME _site/CNAME
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v3

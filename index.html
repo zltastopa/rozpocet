@@ -778,7 +778,7 @@ footer details:last-of-type { border-bottom:1px solid var(--grid); margin-bottom
 
   // ---- approved vs actually spent per year (independent of the measure toggle) ----
   const pc = $("pc");
-  const PC_LESS = GROUPS[2].color, PC_MORE = GROUPS[1].color;
+  const PC_LESS = "#64748b", PC_MORE = GROUPS[1].color;   // slate 4,8:1 and site orange 3,3:1 against white
   const PY = YEARS.filter(y => available(y, "schvaleny") && available(y, "skutocnost"));
   const sgn = x => x >= 0 ? "+" : "−";
   function planVal(y) {
@@ -788,18 +788,18 @@ footer details:last-of-type { border-bottom:1px solid var(--grid); margin-bottom
   function drawPlan() {
     const n = PY.length, avail = pc.parentElement.clientWidth;
     const colW = Math.max(26, Math.min(44, (avail - 60) / n));
-    const ml = 40, mr = 12, mt = 26, ph = 210, mb = 40;
+    const ml = 48, mr = 12, mt = 26, ph = 210, mb = 40;
     const W = Math.round(ml + mr + n * colW), H = mt + ph + mb;
-    const vals = PY.map(planVal), ds = vals.map(v => v.d / 1e9);
-    const step = Math.max(...ds.map(Math.abs)) > 6 ? 2 : 1;
-    const top = Math.ceil((Math.max(0, ...ds) + .4) / step) * step, bot = Math.floor((Math.min(0, ...ds) - .4) / step) * step;
+    const vals = PY.map(planVal), ds = vals.map(v => v.p);
+    const step = Math.max(...ds.map(Math.abs)) > 12 ? 5 : 2;
+    const top = Math.ceil(Math.max(0, ...ds) / step) * step, bot = Math.floor(Math.min(0, ...ds) / step) * step;
     const yv = v => mt + ph * (top - v) / (top - bot || 1);
     const svg = el("svg", { id: "pcsvg", viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "group",
       "aria-label": `Rozdiel medzi skutočnými a schválenými výdavkami ${PY[0]} až ${PY[n - 1]}` });
-    text(svg, ml, mt - 12, "mld. €", "ax", 11, "#6b7280");
+    text(svg, ml, mt - 12, "% schváleného rozpočtu", "ax", 11, "#6b7280");
     for (let t = bot; t <= top; t += step) {
       el("line", { x1: ml, x2: W - mr, y1: yv(t), y2: yv(t), stroke: t === 0 ? "#9aa1ae" : "#e8eaf0" }, svg);
-      text(svg, ml - 6, yv(t) + 4, t > 0 ? "+" + t : t < 0 ? "−" + -t : "0", "ax", 11, "#6b7280").setAttribute("text-anchor", "end");
+      text(svg, ml - 6, yv(t) + 4, t > 0 ? `+${t} %` : t < 0 ? `−${-t} %` : "0", "ax", 11, "#6b7280").setAttribute("text-anchor", "end");
     }
     const pat = el("pattern", { id: "hatch3", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, el("defs", {}, svg));
     el("line", { x1: 0, y1: 0, x2: 0, y2: 6, stroke: "#fff", "stroke-width": 2, "stroke-opacity": .7 }, pat);
@@ -814,11 +814,9 @@ footer details:last-of-type { border-bottom:1px solid var(--grid); margin-bottom
         el("rect", Object.assign({ fill: "url(#hatch3)", "pointer-events": "none" }, r), g);
         text(g, cx, H - mb + 30, "predb.", "ax", 9.5, "#8a5a00").setAttribute("text-anchor", "middle");
       }
-      const ly = v.d < 0 ? r.y + r.height + 11 : r.y - 4;
-      text(g, cx, ly, sgn(v.d) + nf1.format(Math.abs(v.p)), "ax", colW >= 32 ? 10 : 9, "#6b7280").setAttribute("text-anchor", "middle");
       g.setAttribute("aria-label", `${y}: rozdiel ${sgn(v.d)}${mld(Math.abs(v.d))} (${sgn(v.d)}${pct(Math.abs(v.p))})${v.prov ? ", predbežné" : ""}. Enter zobrazí rok v hlavnom grafe.`);
     });
-    text(svg, ml, H - 4, "pod nulou: minuli menej, nad nulou: viac · číslo = rozdiel v %", "ax", 10, "#6b7280");
+    text(svg, ml, H - 4, "pod nulou: minuli menej, než schválili · nad nulou: viac", "ax", 10, "#6b7280");
     pc.replaceChildren(svg);
   }
   function planTip(y) {
@@ -980,7 +978,7 @@ footer details:last-of-type { border-bottom:1px solid var(--grid); margin-bottom
     const estY = YEARS.filter(y => isEst(y, state.measure));
     if (which === "pc") return {
       title: `Plán a skutočnosť, ${PY[0]} – ${PY[PY.length - 1]}`,
-      sub: `Skutočné mínus schválené výdavky v mld. € · zelená: menej, oranžová: viac${PY.some(y => planVal(y).prov) ? " · šrafované: predbežné" : ""}`,
+      sub: `Skutočné výdavky oproti schváleným, v % schváleného rozpočtu · sivá: menej, oranžová: viac${PY.some(y => planVal(y).prov) ? " · šrafované: predbežné" : ""}`,
       legend: false, extra: [] };
     if (which === "dc") return {
       title: `Obsluha štátneho dlhu, ${YEARS[0]} – ${YEARS[YEARS.length - 1]}`,

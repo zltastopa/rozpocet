@@ -138,8 +138,8 @@ def main() -> None:
 
 <section>
   <h2>Plán a skutočnosť</h2>
-  <p class="desc">O koľko štát minul viac alebo menej, než schválil. Rozdiel nie je len šetrenie: presúva sa aj rezerva
-    a míňajú sa peniaze z minulých rokov.</p>
+  <p class="desc">O koľko štát minul viac alebo menej, než schválil (vrátane noviel). Celkový rozdiel robia najmä
+    nevyčerpané peniaze, prostriedky z minulých rokov a eurofondy; presuny rezerv menia len rozdelenie medzi oblasťami.</p>
   <div class="tc-scroll"><div id="pc"></div></div>
   <div class="chart-tools" data-chart="pc"><button class="ct" data-act="copy" type="button">Kopírovať obrázok</button><button class="ct" data-act="download" type="button">Stiahnuť PNG</button></div>
 </section>

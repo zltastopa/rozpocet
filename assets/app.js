@@ -302,7 +302,7 @@
   // "Menšie dlaždice" button or a time-chart column); ←/→ move between tiles
   document.addEventListener("keydown", ev => {
     if ((ev.key !== "ArrowDown" && ev.key !== "ArrowUp") || tip.hidden) return;
-    if (!document.activeElement || !document.activeElement.closest("#tm, #small, #tc, #dc")) return;
+    if (!document.activeElement || !document.activeElement.closest("#tm, #small, #tc, #pc, #dc")) return;
     ev.preventDefault();
     tip.scrollTop += ev.key === "ArrowDown" ? 60 : -60;
   });
@@ -533,7 +533,8 @@
 
   // ---- approved vs actually spent per year (independent of the measure toggle) ----
   const pc = $("pc");
-  const PC_LESS = "#64748b", PC_MORE = GROUPS[1].color;   // slate 4,8:1 and site orange 3,3:1 against white
+  // slate and a darker site orange: >= 3:1 on white and on the hover/selection band (#eef1f7)
+  const PC_LESS = "#64748b", PC_MORE = "#d95d24";
   const PY = YEARS.filter(y => available(y, "schvaleny") && available(y, "skutocnost"));
   const sgn = x => x >= 0 ? "+" : "−";
   function planVal(y) {
@@ -734,7 +735,7 @@
     if (which === "pc") return {
       title: `Plán a skutočnosť, ${PY[0]} – ${PY[PY.length - 1]}`,
       sub: `Skutočné výdavky oproti schváleným, v % schváleného rozpočtu · sivá: menej, oranžová: viac${PY.some(y => planVal(y).prov) ? " · šrafované: predbežné" : ""}`,
-      legend: false, extra: [] };
+      legend: false, extra: ["Celkový rozdiel robia najmä nevyčerpané peniaze, prostriedky z minulých rokov a eurofondy; presuny rezerv menia len rozdelenie medzi oblasťami."] };
     if (which === "dc") return {
       title: `Obsluha štátneho dlhu, ${YEARS[0]} – ${YEARS[YEARS.length - 1]}`,
       sub: `${meas}${prov ? " (posledný uzavretý rok predbežne)" : ""} · hore mld. €, dole € zo stovky štátnej kasy${estY.length ? ` · ${estY.join(", ")}: odhad (šrafované)` : ""}`,

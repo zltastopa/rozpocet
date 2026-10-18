@@ -174,12 +174,15 @@
       yoy = `<div class="yoy">Oproti ${state.year - 1}: <b>${Math.abs(d) < 0.005 ? "bez zmeny" : (d >= 0 ? "+" : "−") + eur(Math.abs(d))}</b> zo stovky</div>`;
     }
     const est = !!e.estimate, approx = est ? "≈ " : "";
+    // the other measure of the same year (approved vs actually spent): one short line
+    const oe = D.years[state.year][state.measure === "schvaleny" ? "skutocnost" : "schvaleny"];
+    const both = oe ? `<div class="yoy">${state.measure === "schvaleny" ? "Skutočne minuté" : "Schválené"}: <b>${eur(oe.tiles[id] ? share(oe.tiles[id].v, oe) : 0)}</b> zo stovky${oe.provisional ? " (predbežne)" : ""}</div>` : "";
     return `<div class="tt">${esc(meta.name)}${FOOT[id] ? SUP[FOOT[id]] : ""}</div>`
       + `<div class="big">${approx}${eur(share(t.v, e))} zo stovky</div>`
       + `<div class="meta">${approx}${amt(t.v)}${est ? " · odhad" : ""}</div>`
       + (t.c.length > 1 || childIdx != null ? `<div class="rows">${rows}</div>` : "")
       + (kap ? `<div class="h">Kto platí najviac</div>${kap}` : "")
-      + yoy + (FOOT[id] && meta.note ? `<div class="note">${esc(meta.note)}</div>` : "");
+      + yoy + both + (FOOT[id] && meta.note ? `<div class="note">${esc(meta.note)}</div>` : "");
   }
 
   // ---- treemap ----

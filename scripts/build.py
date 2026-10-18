@@ -219,7 +219,7 @@ NO_YOY = {
 # Documented events / classification notes shown as annotations.
 EVENTS = {
     2009: "Slovensko prijalo euro. Sumy pred rokom 2009 sú prepočítané kurzom 30,1260 Sk/€.",
-    2013: "Platby za poistencov štátu sa odvtedy účtujú inde; tu sú stále v Zdravotníctve, porovnanie platí.",
+    2013: "Platby za poistencov štátu sa odvtedy účtujú inde. Tu sú stále v Zdravotníctve, porovnanie platí.",
     2020: "Pandémia covid-19. Schválený rozpočet bol počas roka novelizovaný.",
 }
 # Years of the energy crisis: the note quotes the energy spending computed from the data.

@@ -362,7 +362,7 @@
       `<div class="kpi"><div class="n">${mld(e.total)}</div><div class="l">výdavky štátnej kasy ${y}${growth == null ? "" : `, ${growth >= 0 ? "+" : "−"}${pct(Math.abs(growth))} oproti ${y - 1}`}</div></div>`
       + `<div class="kpi" title="Štátny rozpočet ${mld(e.state_total - e.transfer)} bez transferu ${mld(e.transfer)} do Sociálnej poisťovne (ten by bol započítaný dvakrát)."><div class="n">${mld(e.sp_total - e.sp_internal)}</div><div class="l">z toho Sociálna poisťovňa</div></div>`
       + (gap == null ? `<div class="kpi"><div class="n">–</div><div class="l">bilancia nie je k dispozícii</div></div>`
-        : gap >= 0 ? `<div class="kpi" title="Schodok štátneho rozpočtu ${mld(stateGap)}; nie je to spoločný schodok štátu a Sociálnej poisťovne."><div class="n">${eur(gap)}</div><div class="l">schodok štátneho rozpočtu na 100&nbsp;€ zobrazených výdavkov</div></div>`
+        : gap >= 0 ? `<div class="kpi" title="Schodok štátneho rozpočtu ${mld(stateGap)}. Nie je to spoločný schodok štátu a Sociálnej poisťovne."><div class="n">${eur(gap)}</div><div class="l">schodok štátneho rozpočtu na 100&nbsp;€ zobrazených výdavkov</div></div>`
           : `<div class="kpi" title="Prebytok štátneho rozpočtu ${mld(-stateGap)}."><div class="n">${eur(-gap)}</div><div class="l">prebytok štátneho rozpočtu na 100&nbsp;€ zobrazených výdavkov</div></div>`);
     // legend
     $("legend").innerHTML = groupSums(e).map(({ g, v }) => `<span><span class="sw" style="background:${g.color}"></span>${esc(g.name)}<b>${eur(share(v, e))}</b></span>`).join("");
@@ -488,7 +488,7 @@
         el("circle", { cx: x + colW / 2, cy: mt + ph + 41, r: 3, fill: "#1b2130" }, g);
       }
       const top = groupSums(e).sort((a, b) => b.v - a.v).slice(0, 3).map(s => `${s.g.name} ${eur(share(s.v, e))}`).join(", ");
-      g.setAttribute("aria-label", `${y}: ${mld(e.total)}; ${top}. Enter zobrazí rok v hlavnom grafe.`);
+      g.setAttribute("aria-label", `${y}: ${mld(e.total)}, ${top}. Enter zobrazí rok v hlavnom grafe.`);
     });
     text(svg, ml, H - 4, "pod rokom: rast výdavkov oproti predchádzajúcemu roku · ● poznámka k roku (v bublinke)", "ax", 10, "#6b7280");
     tc.replaceChildren(svg);
@@ -735,7 +735,7 @@
     if (which === "pc") return {
       title: `Plán a skutočnosť, ${PY[0]} – ${PY[PY.length - 1]}`,
       sub: `Skutočné výdavky oproti schváleným, v % schváleného rozpočtu · sivá: menej, oranžová: viac${PY.some(y => planVal(y).prov) ? " · šrafované: predbežné" : ""}`,
-      legend: false, extra: ["Celkový rozdiel robia najmä nevyčerpané peniaze, prostriedky z minulých rokov a eurofondy; presuny rezerv menia len rozdelenie medzi oblasťami."] };
+      legend: false, extra: ["Celkový rozdiel robia najmä nevyčerpané peniaze, prostriedky z minulých rokov a eurofondy. Presuny rezerv menia len rozdelenie medzi oblasťami."] };
     if (which === "dc") return {
       title: `Obsluha štátneho dlhu, ${YEARS[0]} – ${YEARS[YEARS.length - 1]}`,
       sub: `${meas}${prov ? " (posledný uzavretý rok predbežne)" : ""} · hore mld. €, dole € zo stovky štátnej kasy${estY.length ? ` · ${estY.join(", ")}: odhad (šrafované)` : ""}`,

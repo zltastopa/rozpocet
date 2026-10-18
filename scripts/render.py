@@ -45,7 +45,7 @@ def main() -> None:
     footnotes = "".join(
         f"<li id=\"pozn-{tid}\"><b>{esc(tiles[tid]['name'])}:</b> {esc(tiles[tid]['note'])}</li>"
         for tid in FOOTNOTED)
-    residuals = "; ".join(
+    residuals = " · ".join(
         f"{r['rok']}, kapitola {r['kapitola']} × COFOG {r['cofog']} ({'skutočnosť' if r['meranie'] == 'skutocnost' else 'schválený'}): "
         f"{r['rozdiel_eur']:,.2f} €".replace(",", " ").replace(".", ",")
         for r in DATA["residuals"]) or "žiadne"
@@ -68,9 +68,9 @@ def main() -> None:
             f"<li><b>Presné:</b> sumy, ktorých účel uvádza hlavná kniha rozpočtu, napríklad 560 + 50 mil. € vojenským "
             f"nemocniciam alebo odvod do EÚ (<a href=\"data/navrh_polozky.csv\">zoznam so zdrojmi</a>).</li>"
             f"<li><b>Odhad:</b> ostatné <a href=\"{esc(x['zdroj_programy'])}\">programy zo zákona</a> delíme podľa rozpočtu "
-            f"{x['zaklad'][0]}{', prípadne ' + str(x['zaklad'][1]) if len(x['zaklad']) > 1 else ''} alebo celej kapitoly; "
-            f"riadky Plánu obnovy vynechávame. Programy, ktoré miešajú oblasti, dali v roku {x['zaklad'][0]} mimo svojej "
-            f"hlavnej oblasti ≈ {mixed} € zo stovky; práve toto rozdelenie je odhad.</li>"
+            f"{x['zaklad'][0]}{', prípadne ' + str(x['zaklad'][1]) if len(x['zaklad']) > 1 else ''} alebo celej kapitoly, "
+            f"bez riadkov Plánu obnovy. Programy, ktoré miešajú oblasti, dali v roku {x['zaklad'][0]} mimo svojej "
+            f"hlavnej oblasti ≈ {mixed} € zo stovky. Práve toto rozdelenie je odhad.</li>"
             + (f"<li><b>Test:</b> rovnaký postup na roku {bt['rok']} sa mýlil priemerne o {sk_num(bt['priemerna_chyba'])} € "
                f"na dlaždicu, najviac o {sk_num(bt['max_chyba'])} €.</li>" if bt else "")
             + "<li>Keď ministerstvo zverejní skutočné rozdelenie, odhad sa pri mesačnej obnove nahradí.</li></ul></details>")
@@ -139,7 +139,7 @@ def main() -> None:
 <section>
   <h2>Plán a skutočnosť</h2>
   <p class="desc">O koľko štát minul viac alebo menej, než schválil (vrátane noviel). Celkový rozdiel robia najmä
-    nevyčerpané peniaze, prostriedky z minulých rokov a eurofondy; presuny rezerv menia len rozdelenie medzi oblasťami.</p>
+    nevyčerpané peniaze, prostriedky z minulých rokov a eurofondy. Presuny rezerv menia len rozdelenie medzi oblasťami.</p>
   <div class="tc-scroll"><div id="pc"></div></div>
   <div class="chart-tools" data-chart="pc"><button class="ct" data-act="copy" type="button">Kopírovať obrázok</button><button class="ct" data-act="download" type="button">Stiahnuť PNG</button></div>
 </section>
@@ -147,7 +147,7 @@ def main() -> None:
 <section>
   <h2>Obsluha štátneho dlhu v čase</h2>
   <p class="desc">Hore v miliardách eur, dole zo stovky.
-    Od roku 2012 je to transfer správcovi dlhu, nie priamo zaplatené úroky; v rokoch 2020 a 2021 štát
+    Od roku 2012 je to transfer správcovi dlhu, nie priamo zaplatené úroky. V rokoch 2020 a 2021 štát
     poslal výrazne menej, než schválil.</p>
   <div class="tc-scroll"><div id="dc"></div></div>
   <div class="chart-tools" data-chart="dc"><button class="ct" data-act="copy" type="button">Kopírovať obrázok</button><button class="ct" data-act="download" type="button">Stiahnuť PNG</button></div>
@@ -178,9 +178,9 @@ def main() -> None:
     <li>Každé euro je práve v jednej dlaždici: štát podľa funkčnej klasifikácie COFOG, Sociálna poisťovňa podľa druhu výdavku.</li>
     <li>Výnimky: platby za poistencov štátu (642031) idú do Zdravotníctva, všetok výskum do Vedy a výskumu,
       odvod do EÚ a financie VPS majú vlastné dlaždice.</li>
-    <li>Sociálna poisťovňa: starobné, invalidné a pozostalostné dôchodky do Dôchodkov; nemocenské, materské,
-      úrazové dávky, dávka v nezamestnanosti a správa do Dávok.</li>
-    <li>Súčet dlaždíc kontrolujeme so zverejnenými celkami (tolerancia 1&nbsp;€); zobrazené sumy sú zaokrúhlené.</li>
+    <li>Sociálna poisťovňa: starobné, invalidné a pozostalostné dôchodky idú do Dôchodkov, nemocenské, materské
+      a úrazové dávky, dávka v nezamestnanosti a správa do Dávok.</li>
+    <li>Súčet dlaždíc kontrolujeme so zverejnenými celkami (tolerancia 1&nbsp;€). Zobrazené sumy sú zaokrúhlené.</li>
     <li>Drobné rozdiely medzi dvoma zdrojmi MF: {esc(residuals)}.</li>
   </ul></details>
   {next_year_note}

@@ -64,8 +64,8 @@ TILES = [
     ("skolstvo", "ludia", "Školstvo", None,
      "Vzdelávanie za všetky kapitoly (COFOG 09), bez výskumu a vývoja v oblasti vzdelávania."),
     ("zdravie", "ludia", "Zdravotníctvo", None,
-     "Vrátane platieb štátu za svojich poistencov. Väčšinu zdravotníctva platia zdravotné poisťovne, "
-     "tie v stovke nie sú."),
+     "Len to, čo platí štát: hlavne platby za svojich poistencov a nemocnice. Väčšinu zdravotníctva "
+     "platia zdravotné poisťovne z odvodov, tie v stovke nie sú."),
     ("veda", "ludia", "Veda a výskum", None,
      "Základný výskum a výskum a vývoj vo všetkých oblastiach (všetky výskumné kódy COFOG)."),
     ("kultura", "ludia", "Kultúra, šport a médiá", "Kultúra a šport", None),

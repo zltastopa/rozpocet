@@ -666,7 +666,7 @@
 
   // ---- treemap share image: fixed 1080×1350 (4:5 portrait for LinkedIn), every tile labelled ----
   const SHARE_W = 1080, SHARE_H = 1350, SHARE_PAD = 56;
-  const SHARE_SCOPE = "Štátny rozpočet a Sociálna poisťovňa spolu, bez zdravotných poisťovní, obcí a krajov.";
+  const SHARE_SCOPE = "Štátny rozpočet a Sociálna poisťovňa spolu, bez zdravotných poisťovní, obcí a krajov. Zdravotníctvo je preto len to, čo platí štát.";
   // at most maxLines, never ellipsized: null when a word or the line count does not fit
   function fitLines(g, str, maxW, maxLines) {
     const lines = wrapLines(g, str, maxW);
@@ -747,13 +747,20 @@
       g.fillStyle = "#2f6fed"; g.font = `700 30px ${FONT}`; g.fillText(D.site, P, uy);
       g.fillStyle = MUTED; g.font = `20px ${FONT}`; g.textAlign = "right";
       g.fillText("dáta: rozpocet.sk (MF SR)", W - P, uy); g.textAlign = "left";
-      g.font = `19px ${FONT}`;
-      const notes = [SHARE_SCOPE, est ? `${state.year}: ${EST_LINE.charAt(0).toLowerCase() + EST_LINE.slice(1)}` : ""]
-        .filter(Boolean).flatMap(x => wrapLines(g, x, W - 2 * P));
-      const notesY = uy - 50 - (notes.length - 1) * 27;
-      notes.forEach((l, i) => g.fillText(l, P, notesY + i * 27));
-      // group legend in one row, shrunk to fit the width
-      const ly = notesY - 52;
+      // the notes block has a fixed height (two lines at 19 px) so adding a note never changes
+      // the treemap's size and therefore its layout; a third line is set a bit tighter instead
+      let nf = 19, nl = 27;
+      g.font = `${nf}px ${FONT}`;
+      const noteText = [SHARE_SCOPE, est ? `${state.year}: ${EST_LINE.charAt(0).toLowerCase() + EST_LINE.slice(1)}` : ""].filter(Boolean);
+      let notes = noteText.flatMap(x => wrapLines(g, x, W - 2 * P));
+      if (notes.length > 2) {
+        nf = 17; nl = 20; g.font = `${nf}px ${FONT}`;
+        notes = noteText.flatMap(x => wrapLines(g, x, W - 2 * P));
+      }
+      const notesY = uy - 50 - (notes.length - 1) * nl;
+      notes.forEach((l, i) => g.fillText(l, P, notesY + i * nl));
+      // group legend in one row, shrunk to fit the width; its position does not depend on the notes
+      const ly = uy - 50 - 27 - 52;
       let lf = 23;
       const legendW = f => { g.font = `600 ${f}px ${FONT}`; return GROUPS.reduce((s, gr) => s + f * 1.2 + g.measureText(gr.name).width, 0) + f * 1.3 * (GROUPS.length - 1); };
       while (lf > 14 && legendW(lf) > W - 2 * P) lf--;

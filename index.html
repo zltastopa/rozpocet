@@ -428,9 +428,10 @@ footer details:last-of-type { border-bottom:1px solid var(--grid); margin-bottom
   // ---- treemap ----
   const tm = $("tm");
   let tmSvg = null;
-  function layout(width) {
+  // height defaults to the on-screen size; the share image passes a fixed one
+  function layout(width, height) {
     const e = entry(), mobile = width < 560;
-    const H = Math.round(mobile ? width * 1.45 : Math.min(640, Math.max(440, width * .62)));
+    const H = height || Math.round(mobile ? width * 1.45 : Math.min(640, Math.max(440, width * .62)));
     const groups = GROUPS.map(g => ({ id: g.id, v: TILES.filter(t => t.group === g.id).reduce((s, t) => s + ((e.tiles[t.id] || {}).v || 0), 0) }));
     const out = [];
     for (const gr of squarify(groups, 0, 0, width, H)) {
@@ -879,19 +880,12 @@ footer details:last-of-type { border-bottom:1px solid var(--grid); margin-bottom
   window.addEventListener("resize", () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { drawTreemap(); drawTime(); drawDebt(); }); });
 
   // ---- PNG export (copy / download) with title, scope caveat and source baked in ----
-  const FONT = "-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
-  const EXPORT_CSS = `text{font-family:${FONT}}.tl-amt{font-weight:700}.tl-name{font-weight:500}.tile .sub{fill:none;stroke:rgba(255,255,255,.85);stroke-width:1}`;
+  const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+  const EXPORT_CSS = `text{font-family:${FONT}}`;
   const SCOPE = "Štátny rozpočet a Sociálna poisťovňa bez vzájomných transferov. Bez zdravotných poisťovní, obcí a krajov.";
+  // time and debt charts: the on-screen SVG plus header and footer (the treemap uses shareImage)
   function exportMeta(which) {
-    const meas = MEASURE_LABEL[state.measure], e = entry();
-    if (which === "tm") return {
-      title: `Kam ide stovka zo štátnej kasy ${state.year}${e.estimate ? " (odhad)" : ""}`,
-      sub: `100 € = ${mld(e.total)} výdavkov (${meas}${e.provisional ? ", predbežné údaje" : ""})`,
-      legend: true,
-      extra: [e.estimate ? `${state.year}: ${EST_LINE.charAt(0).toLowerCase() + EST_LINE.slice(1)}` : "",
-        smallList()].concat(D.footnoted.filter(id => e.tiles[id])
-        .map(id => `${SUP[FOOT[id]]} ${TILE[id].name}: ${TILE[id].note}`)).filter(Boolean)
-    };
+    const meas = MEASURE_LABEL[state.measure];
     const prov = YEARS.some(y => (entry(y) || {}).provisional);
     const estY = YEARS.filter(y => isEst(y, state.measure));
     if (which === "dc") return {
@@ -902,15 +896,123 @@ footer details:last-of-type { border-bottom:1px solid var(--grid); margin-bottom
       sub: `${meas}${prov ? " (posledný uzavretý rok predbežne)" : ""}${estY.length ? ` · ${estY.join(", ")}: rozdelenie je odhad (šrafované)` : ""} · rovnaká výška stĺpcov = podiely, nie rast výdavkov`, legend: true,
       extra: estY.length ? [`${estY.join(", ")}: ${EST_LINE}`] : [] };
   }
-  function smallList() {
-    const bs = [...$("small").querySelectorAll("button")];
-    return bs.length ? "Menšie oblasti: " + bs.map(b => `${b.title} ${b.querySelector("b").textContent}`).join(", ") : "";
-  }
   function wrapLines(g, str, maxW) {
     const words = str.split(" "), lines = []; let cur = "";
     for (const w of words) { const t = cur ? cur + " " + w : w; if (g.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
     if (cur) lines.push(cur);
     return lines;
+  }
+
+  // ---- treemap share image: fixed 1080×1350 (4:5 portrait for LinkedIn), every tile labelled ----
+  const SHARE_W = 1080, SHARE_H = 1350, SHARE_PAD = 56;
+  const SHARE_SCOPE = "Štátny rozpočet a Sociálna poisťovňa spolu, bez zdravotných poisťovní, obcí a krajov.";
+  // at most maxLines, never ellipsized: null when a word or the line count does not fit
+  function fitLines(g, str, maxW, maxLines) {
+    const lines = wrapLines(g, str, maxW);
+    return lines.length <= maxLines && lines.every(l => g.measureText(l).width <= maxW) ? lines : null;
+  }
+  // biggest amount + name (up to 2 lines) that fits a w×h box, else the amount alone, else null
+  function fitLabel(g, bw, bh, lbl, name, pad) {
+    const p = pad || Math.max(7, Math.min(18, Math.min(bw, bh) * .09)), w = bw - 2 * p, h = bh - 2 * p;
+    const top = Math.round(Math.min(64, Math.max(18, Math.sqrt(bw * bh) / 5.5)));
+    const fits = a => { g.font = `700 ${a}px ${FONT}`; return g.measureText(lbl).width <= w && a * .78 <= h; };
+    for (let a = top; a >= 15; a--) {
+      if (!fits(a)) continue;
+      // the name stays readable next to the amount: 45–60 % of its size, at least 13 px
+      for (let n = Math.max(13, Math.min(28, Math.round(a * .6))); n >= Math.max(13, Math.round(a * .45)); n--) {
+        g.font = `500 ${n}px ${FONT}`;
+        const lines = fitLines(g, name, w, 2);
+        if (lines && a * .78 + n * (.3 + 1.2 * lines.length) <= h) return { p, a, n, lines };
+      }
+    }
+    for (let a = Math.min(top, 22); a >= 12; a--) if (fits(a)) return { p, a, n: 0, lines: [] };
+    return null;
+  }
+  // a name that does not fit gets a tighter padding, then (tall narrow tiles) a label reading upwards
+  function shareLabel(g, r, lbl, name) {
+    const named = f => f && f.lines.length;
+    const flat = fitLabel(g, r.w, r.h, lbl, name);
+    if (named(flat)) return flat;
+    const tight = fitLabel(g, r.w, r.h, lbl, name, 6);
+    if (named(tight)) return tight;
+    if (r.h > 1.5 * r.w) {
+      const up = fitLabel(g, r.h, r.w, lbl, name);
+      if (named(up) || (up && !flat)) return { ...up, rot: true };
+    }
+    return flat;
+  }
+  function shareImage(cb) {
+    const e = entry(), S = 2, W = SHARE_W, H = SHARE_H, P = SHARE_PAD, INK = "#1b2130", MUTED = "#6b7280";
+    const est = !!e.estimate, badge = document.querySelector(".badge img");
+    (badge ? badge.decode().catch(() => {}) : Promise.resolve()).then(() => {
+      const c = document.createElement("canvas");
+      c.width = W * S; c.height = H * S;
+      const g = c.getContext("2d"); g.scale(S, S);
+      g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+      // Žltá Stopa badge top-right, next to the first title line
+      if (badge && badge.naturalWidth) {
+        const bh = 54, bw = bh * badge.naturalWidth / badge.naturalHeight;
+        g.drawImage(badge, W - P - bw, P - 6, bw, bh);
+      }
+      // title in two lines, as big as the second line (+ estimate pill) allows
+      const t1 = "Kam ide stovka", t2 = `zo štátnej kasy ${state.year}`;
+      const pillFont = f => `700 ${Math.round(f * .4)}px ${FONT}`;
+      const pillW = f => { g.font = pillFont(f); return g.measureText("odhad").width + f * .44; };
+      const titleW = f => { const pw = est ? f * .3 + pillW(f) : 0; g.font = `800 ${f}px ${FONT}`; return g.measureText(t2).width + pw; };
+      let fs = 66;
+      while (fs > 40 && titleW(fs) > W - 2 * P) fs -= 2;
+      const y1 = P + fs * .8, y2 = y1 + fs * 1.08;
+      g.fillStyle = INK; g.font = `800 ${fs}px ${FONT}`;
+      g.fillText(t1, P, y1); g.fillText(t2, P, y2);
+      if (est) {
+        const px = P + g.measureText(t2).width + fs * .3, ph = fs * .6, pw = pillW(fs), top = y2 - fs * .66;
+        g.fillStyle = "#fff3c4"; g.beginPath(); g.roundRect(px, top, pw, ph, ph * .25); g.fill();
+        g.fillStyle = "#8a5a00"; g.font = pillFont(fs);
+        g.fillText("odhad", px + fs * .22, top + ph / 2 + fs * .145);
+      }
+      const sy = y2 + 46;
+      g.fillStyle = MUTED; g.font = `26px ${FONT}`;
+      g.fillText(`100 € = ${mld(e.total)} výdavkov · ${MEASURE_LABEL[state.measure]}${e.provisional ? " · predbežné údaje" : ""}`, P, sy);
+      // footer, bottom-up: URL and source, above them one or two short notes
+      const uy = H - P + 10;
+      g.fillStyle = "#2f6fed"; g.font = `700 30px ${FONT}`; g.fillText(D.site, P, uy);
+      g.fillStyle = MUTED; g.font = `20px ${FONT}`; g.textAlign = "right";
+      g.fillText("dáta: rozpocet.sk (MF SR)", W - P, uy); g.textAlign = "left";
+      g.font = `19px ${FONT}`;
+      const notes = [SHARE_SCOPE, est ? `${state.year}: ${EST_LINE.charAt(0).toLowerCase() + EST_LINE.slice(1)}` : ""]
+        .filter(Boolean).flatMap(x => wrapLines(g, x, W - 2 * P));
+      const notesY = uy - 50 - (notes.length - 1) * 27;
+      notes.forEach((l, i) => g.fillText(l, P, notesY + i * 27));
+      // group legend in one row, shrunk to fit the width
+      const ly = notesY - 52;
+      let lf = 23;
+      const legendW = f => { g.font = `600 ${f}px ${FONT}`; return GROUPS.reduce((s, gr) => s + f * 1.2 + g.measureText(gr.name).width, 0) + f * 1.3 * (GROUPS.length - 1); };
+      while (lf > 14 && legendW(lf) > W - 2 * P) lf--;
+      g.font = `600 ${lf}px ${FONT}`;
+      let lx = P;
+      for (const gr of GROUPS) {
+        g.fillStyle = gr.color; g.beginPath(); g.roundRect(lx, ly - lf * .76, lf * .8, lf * .8, 3); g.fill();
+        g.fillStyle = INK; g.fillText(gr.name, lx + lf * 1.2, ly);
+        lx += lf * 2.5 + g.measureText(gr.name).width;
+      }
+      // treemap between the sub line and the legend: no sub-tiles, amount + short name wherever it fits
+      const ty = sy + 30, L = layout(W - 2 * P, Math.round(ly - lf - 24 - ty)), approx = est ? "≈ " : "";
+      for (const { id, r: r0 } of L.tiles) {
+        const r = { x: r0.x + P, y: r0.y + ty, w: r0.w, h: r0.h };
+        g.fillStyle = COLOR[id]; g.beginPath(); g.roundRect(r.x, r.y, r.w, r.h, 3); g.fill();
+        const lbl = approx + eur(share(e.tiles[id].v, e)), f = shareLabel(g, r, lbl, TILE[id].short);
+        if (!f) continue;
+        // rotated labels are laid out in the tile's own frame, origin at its bottom-left corner
+        g.save();
+        if (f.rot) { g.translate(r.x, r.y + r.h); g.rotate(-Math.PI / 2); }
+        const x = (f.rot ? 0 : r.x) + f.p, ay = (f.rot ? 0 : r.y) + f.p + f.a * .78;
+        g.fillStyle = TEXT[id]; g.font = `700 ${f.a}px ${FONT}`; g.fillText(lbl, x, ay);
+        g.font = `500 ${f.n}px ${FONT}`;
+        f.lines.forEach((l, i) => g.fillText(l, x, ay + f.n * (.3 + 1.2 * (i + 1)) - f.n * .2));
+        g.restore();
+      }
+      cb(c);
+    });
   }
   function rasterize(svg, meta, cb) {
     const W = +svg.getAttribute("width"), H = +svg.getAttribute("height"), S = 2, pad = 16;
@@ -967,22 +1069,25 @@ footer details:last-of-type { border-bottom:1px solid var(--grid); margin-bottom
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name + ".png"; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 3000);
   }
-  const toBlob = (svg, meta) => new Promise(res => rasterize(svg, meta, c => c ? c.toBlob(res, "image/png") : res(null)));
+  // the treemap is redrawn for sharing; the other charts are rasterized from their on-screen SVG
+  const toBlob = (which, svg) => new Promise(res => {
+    const done = c => c ? c.toBlob(res, "image/png") : res(null);
+    if (which === "tm") shareImage(done); else rasterize(svg, exportMeta(which), done);
+  });
   document.addEventListener("click", ev => {
     const btn = ev.target.closest(".ct"); if (!btn) return;
     const which = btn.closest(".chart-tools").dataset.chart;
     const svg = which === "tm" ? tmSvg : $(which + "svg");
     if (!svg) return;
-    const meta = exportMeta(which);
     const name = { tm: `stovka-${state.year}-${state.measure}`, tc: `stovka-v-case-${state.measure}`,
                    dc: `obsluha-dlhu-${state.measure}`, pc: "plan-a-skutocnost" }[which];
     const save = p => p.then(b => { if (b) { dl(b, name); flash(btn, "Stiahnuté ✓"); } else flash(btn, "Chyba"); });
-    if (btn.dataset.act === "download") return save(toBlob(svg, meta));
+    if (btn.dataset.act === "download") return save(toBlob(which, svg));
     if (navigator.clipboard && window.ClipboardItem) {   // Safari needs write() inside the gesture
-      const p = toBlob(svg, meta);
+      const p = toBlob(which, svg);
       navigator.clipboard.write([new ClipboardItem({ "image/png": p })])
         .then(() => flash(btn, "Skopírované ✓")).catch(() => save(p));
-    } else save(toBlob(svg, meta));
+    } else save(toBlob(which, svg));
   });
 
   readHash(); writeHash(); render();

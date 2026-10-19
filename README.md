@@ -36,7 +36,8 @@ vložené priamo v nej, otvorí sa aj offline):
   dlh spravuje (skutočne zaplatené úroky sa od neho môžu líšiť, výrazne v rokoch
   2020 a 2021).
 - **Kopírovať / stiahnuť PNG** pre všetky grafy, s názvom, rokom, rozsahom údajov
-  a zdrojom vloženým priamo do obrázka.
+  a zdrojom vloženým priamo do obrázka. Stovka sa kreslí nanovo na pevný formát
+  1080 × 1350 (4:5, na sociálne siete) s popisom každej oblasti, ktorá sa zmestí.
 - Tabuľka hodnôt, ovládanie klávesnicou, zdieľateľný odkaz na rok
   (`#2025-skutocnost`).
 

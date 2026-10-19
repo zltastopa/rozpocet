@@ -42,12 +42,17 @@ TOLERANCE_EUR = 1.0
 FIRST_SHOWN = 2006
 
 # ---- taxonomy -------------------------------------------------------------
+# Group colours without signal meaning (no green, red or yellow, which read as good/bad):
+# indigo, magenta, sky blue, orange and slate grey for the state's overhead (debt service,
+# reserves, administration), which is not a "service". Chosen from four candidates. Worst
+# pair distance (ΔE_OK×100) under simulated protanopia/deuteranopia/tritanopia is 4,5 / 8,8 /
+# 6,1, against 9,6 / 2,9 / 6,4 for the previous blue/orange/green/yellow/pink palette.
 GROUPS = [
-    {"id": "soc", "name": "Sociálne veci", "color": "#2f6fed"},
-    {"id": "ludia", "name": "Služby pre ľudí", "color": "#e8692f"},
-    {"id": "hosp", "name": "Hospodárstvo", "color": "#17a673"},
-    {"id": "bezp", "name": "Bezpečnosť", "color": "#e3a008"},
-    {"id": "stat", "name": "Štát a dlh", "color": "#d6457f"},
+    {"id": "soc", "name": "Sociálne veci", "color": "#4338ca"},
+    {"id": "ludia", "name": "Služby pre ľudí", "color": "#c026d3"},
+    {"id": "hosp", "name": "Hospodárstvo", "color": "#0ea5e9"},
+    {"id": "bezp", "name": "Bezpečnosť", "color": "#f97316"},
+    {"id": "stat", "name": "Štát a dlh", "color": "#475569"},
 ]
 
 # id, group, full name, short label for the tile (None = same), footnote

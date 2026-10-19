@@ -22,10 +22,18 @@
     const ch = [n >> 16, (n >> 8) & 255, n & 255].map(c => { c /= 255; return c <= .03928 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4); });
     return .2126 * ch[0] + .7152 * ch[1] + .0722 * ch[2];
   }
+  // label colour: white or ink, whichever has the higher contrast against the fill
+  const INK_LUM = lum("#1b2130");
+  const best = c => Math.max(1.05 / (lum(c) + .05), (lum(c) + .05) / (INK_LUM + .05));
   const COLOR = {};
-  GROUPS.forEach(g => TILES.filter(t => t.group === g.id).forEach((t, i) => { COLOR[t.id] = mix(g.color, [0, .22, .4, .55][i] ?? .6); }));
-  // white text needs >= 4.5:1 against the fill, otherwise use ink
-  const TEXT = Object.fromEntries(Object.entries(COLOR).map(([k, c]) => [k, 1.05 / (lum(c) + .05) >= 4.5 ? "#fff" : "#1b2130"]));
+  // tints lighten the group colour by position; a tint that lands in the mid-tone band where
+  // neither white nor ink reaches 4.5:1 is lightened a little further until one does
+  GROUPS.forEach(g => TILES.filter(t => t.group === g.id).forEach((t, i) => {
+    let k = [0, .22, .4, .55][i] ?? .6;
+    while (best(mix(g.color, k)) < 4.5 && k < .9) k += .02;
+    COLOR[t.id] = mix(g.color, k);
+  }));
+  const TEXT = Object.fromEntries(Object.entries(COLOR).map(([k, c]) => [k, 1.05 / (lum(c) + .05) >= (lum(c) + .05) / (INK_LUM + .05) ? "#fff" : "#1b2130"]));
 
   // ---- formatting (Slovak) ----
   const nf2 = new Intl.NumberFormat("sk-SK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });

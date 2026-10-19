@@ -686,6 +686,13 @@
         if (lines && a * .78 + n * (.3 + 1.2 * lines.length) <= h) return { p, a, n, lines };
       }
     }
+    // one line „amount name“ for wide but short boxes, else the amount alone
+    for (let a = Math.min(top, 22); a >= 12; a--) {
+      if (!fits(a)) continue;
+      const aw = g.measureText(lbl).width, n = Math.max(12, Math.round(a * .9));
+      g.font = `500 ${n}px ${FONT}`;
+      if (aw + a * .35 + g.measureText(name).width <= w) return { p, a, n, lines: [name], inline: aw + a * .35 };
+    }
     for (let a = Math.min(top, 22); a >= 12; a--) if (fits(a)) return { p, a, n: 0, lines: [] };
     return null;
   }
@@ -697,7 +704,8 @@
     const tight = fitLabel(g, r.w, r.h, lbl, name, 6);
     if (named(tight)) return tight;
     if (r.h > 1.5 * r.w) {
-      const up = fitLabel(g, r.h, r.w, lbl, name);
+      let up = fitLabel(g, r.h, r.w, lbl, name);
+      if (!named(up)) { const t = fitLabel(g, r.h, r.w, lbl, name, 6); if (named(t)) up = t; }
       if (named(up) || (up && !flat)) return { ...up, rot: true };
     }
     return flat;
@@ -769,7 +777,8 @@
         const x = (f.rot ? 0 : r.x) + f.p, ay = (f.rot ? 0 : r.y) + f.p + f.a * .78;
         g.fillStyle = TEXT[id]; g.font = `700 ${f.a}px ${FONT}`; g.fillText(lbl, x, ay);
         g.font = `500 ${f.n}px ${FONT}`;
-        f.lines.forEach((l, i) => g.fillText(l, x, ay + f.n * (.3 + 1.2 * (i + 1)) - f.n * .2));
+        if (f.inline) g.fillText(f.lines[0], x + f.inline, ay);
+        else f.lines.forEach((l, i) => g.fillText(l, x, ay + f.n * (.3 + 1.2 * (i + 1)) - f.n * .2));
         g.restore();
       }
       cb(c);

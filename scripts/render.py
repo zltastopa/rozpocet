@@ -68,7 +68,7 @@ def main() -> None:
             f"<details id=\"odhad\"><summary>Rok {y}: čo je presné a čo odhad</summary><ul>"
             f"<li><b>Presné:</b> celkové výdavky a príjmy štátu (<a href=\"{esc(x['zdroj_bilancia'])}\">zákon, príloha č. 1</a>), "
             f"Sociálna poisťovňa (<a href=\"{esc(x['zdroj_sp'])}\">schválený rozpočet</a>) a transfer medzi nimi.</li>"
-            f"<li><b>Presné:</b> sumy, ktorých účel uvádza hlavná kniha rozpočtu, napríklad 560 + 50 mil. € vojenským "
+            f"<li><b>Presné:</b> sumy, ktorých účel uvádza Návrh rozpočtu verejnej správy od MF SR, napríklad 560 + 50 mil. € vojenským "
             f"nemocniciam alebo odvod do EÚ (<a href=\"data/navrh_polozky.csv\">zoznam so zdrojmi</a>).</li>"
             f"<li><b>Odhad:</b> ostatné <a href=\"{esc(x['zdroj_programy'])}\">programy zo zákona</a> delíme podľa rozpočtu "
             f"{x['zaklad'][0]}{', prípadne ' + str(x['zaklad'][1]) if len(x['zaklad']) > 1 else ''} alebo celej kapitoly, "

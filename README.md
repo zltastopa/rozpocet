@@ -116,7 +116,7 @@ financií SR (licencia CC0):
   do nej (2 000 000 000 €, rovnako v oboch dokumentoch). Rozdelenie výdavkov štátu
   do oblastí ministerstvo zatiaľ nezverejnilo, preto ho skladáme
   (`scripts/estimate.py`) presne tam, kde sa dá, a odhadujeme len zvyšok:
-  - **Presne podľa hlavnej knihy** (`data/navrh_polozky.csv`, každá suma so
+  - **Presne podľa Návrhu rozpočtu verejnej správy** (dokument MF SR k zákonu, `data/navrh_polozky.csv`, každá suma so
     zdrojom): odvod do EÚ, položky „Správy ostatných výdavkov“ (napr. 700 mil. €
     do štátnych finančných aktív, 482 mil. € na sociálne a prorodinné zmeny) a
     účelové sumy vnútri programov ministerstiev, napr. 560 + 50 mil. € vojenským
@@ -133,9 +133,9 @@ financií SR (licencia CC0):
   miešajú viac oblastí, dali vtedy mimo svojej hlavnej oblasti spolu asi
   1,06 mld. € (≈ 2,16 € zo stovky 2027). Práve toto rozdelenie odhadujeme, hlavne
   v programoch 077 (vysoké školy: školstvo alebo veda), 0D6 MV (polícia alebo
-  správa) a 072 MF (daňová alebo colná správa), ktoré hlavná kniha nerozpisuje.
+  správa) a 072 MF (daňová alebo colná správa), ktoré návrh rozpočtu nerozpisuje.
   Spätný test na roku 2026 na tej istej hranici, s účelovými sumami len z
-  vtedajšej hlavnej knihy (a energetickej položky VPS doplnenej parlamentom):
+  vtedajšieho návrhu rozpočtu (a energetickej položky VPS doplnenej parlamentom):
   chyba dlaždice v priemere 0,11 € zo stovky, najviac 0,58 €. Na stránke je rok
   výrazne označený („odhad“, „≈“, šrafovanie). Keď MF zverejní skutočné
   členenie, odhad sa automaticky nahradí. Odhad 2027:

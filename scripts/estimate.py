@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DETAIL = ROOT / "cache" / "detail"
 
 LEVELS = [
-    ("presna_suma", "presná suma z hlavnej knihy rozpočtu alebo rozpočtu Sociálnej poisťovne"),
+    ("presna_suma", "presná suma z Návrhu rozpočtu verejnej správy (MF SR) alebo rozpočtu Sociálnej poisťovne"),
     ("program_r1", "rovnaký program v tej istej kapitole o rok skôr"),
     ("program_r2", "rovnaký program v tej istej kapitole o dva roky skôr"),
     ("program_ina_kapitola", "rovnaký program v inej kapitole o rok skôr"),

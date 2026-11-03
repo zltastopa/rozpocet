@@ -8797,6 +8797,7 @@ rok,kapitola,nazov_kapitoly,cofog,ekv,dlazdica,schvaleny,skutocnost
 2026,04,"Ministerstvo investícií, regionálneho rozvoja a informatizácie SR",0740,,zdravie,0.0,402409.81
 2026,04,"Ministerstvo investícií, regionálneho rozvoja a informatizácie SR",0750,,veda,0.0,7150000
 2026,04,"Ministerstvo investícií, regionálneho rozvoja a informatizácie SR",0760,,zdravie,0.0,1417491.18
+2026,04,"Ministerstvo investícií, regionálneho rozvoja a informatizácie SR",0810,,kultura,0.0,0.0
 2026,04,"Ministerstvo investícií, regionálneho rozvoja a informatizácie SR",0820,,kultura,0.0,157458.61
 2026,04,"Ministerstvo investícií, regionálneho rozvoja a informatizácie SR",0840,,kultura,0.0,103519.52
 2026,04,"Ministerstvo investícií, regionálneho rozvoja a informatizácie SR",0912,,skolstvo,0.0,1404972.94
@@ -8912,7 +8913,6 @@ rok,kapitola,nazov_kapitoly,cofog,ekv,dlazdica,schvaleny,skutocnost
 2026,18,Ministerstvo životného prostredia SR,0820,,kultura,1617203,1316976
 2026,20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",0111,,sprava,0.0,0.0
 2026,20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",0113,,sprava,11452982,7927070.09
-2026,20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",0122,,sprava,0.0,0.0
 2026,20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",0133,,sprava,8183683,21991331.63
 2026,20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",0140,,veda,432683087,329009981.68
 2026,20,"Ministerstvo školstva, výskumu, vývoja a mládeže SR",0150,,veda,0.0,3121710.95
@@ -8982,7 +8982,6 @@ rok,kapitola,nazov_kapitoly,cofog,ekv,dlazdica,schvaleny,skutocnost
 2026,26,Ministerstvo hospodárstva SR,0980,,skolstvo,0.0,298.65
 2026,27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,0112,,sprava,0.0,0.0
 2026,27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,0113,,sprava,906744,4000
-2026,27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,0131,,sprava,0.0,0.0
 2026,27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,0132,,sprava,14532611,7022424.75
 2026,27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,0210,,obrana,101665,98700
 2026,27,Ministerstvo pôdohospodárstva a rozvoja vidieka SR,0411,,priemysel,25000,15000
@@ -9037,6 +9036,7 @@ rok,kapitola,nazov_kapitoly,cofog,ekv,dlazdica,schvaleny,skutocnost
 2026,38,"Úrad pre normalizáciu, metrológiu a skúšobníctvo SR",0481,,veda,2482799,1134000
 2026,40,Protimonopolný úrad SR,0411,,priemysel,4367908,3864376.36
 2026,40,Protimonopolný úrad SR,0950,,skolstvo,25000,18433.94
+2026,41,Národný bezpečnostný úrad,0210,,obrana,0.0,0.0
 2026,41,Národný bezpečnostný úrad,0360,,policia,17771126,8253437.5
 2026,41,Národný bezpečnostný úrad,0721,,zdravie,50000,9746.47
 2026,41,Národný bezpečnostný úrad,0950,,skolstvo,110000,46952.01
@@ -9074,6 +9074,7 @@ rok,kapitola,nazov_kapitoly,cofog,ekv,dlazdica,schvaleny,skutocnost
 2026,48,Všeobecná pokladničná správa,0630,,byvanie,0.0,5000
 2026,48,Všeobecná pokladničná správa,0640,,byvanie,0.0,296100
 2026,48,Všeobecná pokladničná správa,0721,,zdravie,0.0,29000
+2026,48,Všeobecná pokladničná správa,0722,,zdravie,0.0,0.0
 2026,48,Všeobecná pokladničná správa,0724,,zdravie,0.0,183000
 2026,48,Všeobecná pokladničná správa,0731,,zdravie,0.0,0.0
 2026,48,Všeobecná pokladničná správa,0733,,zdravie,0.0,0.0
@@ -9095,6 +9096,7 @@ rok,kapitola,nazov_kapitoly,cofog,ekv,dlazdica,schvaleny,skutocnost
 2026,48,Všeobecná pokladničná správa,1070,,davky,0.0,11000
 2026,51,Slovenská akadémia vied,0140,,veda,146758167,76433096.91
 2026,51,Slovenská akadémia vied,0942,,skolstvo,7511408,3713894.09
+2026,51,Slovenská akadémia vied,0950,,skolstvo,0.0,0.0
 2026,55,Kancelária Súdnej rady SR,0330,,policia,3248615,1442160.77
 2026,56,Kancelária Najvyššieho správneho súdu SR,0330,,policia,8663713,3934402.81
 2026,57,Úrad pre územné plánovanie a výstavbu SR,0610,,byvanie,61778431,18306790.97
